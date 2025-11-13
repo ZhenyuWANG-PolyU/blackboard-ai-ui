@@ -3,7 +3,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Bot, Send, User } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Bot, Send, User, FileQuestion, BookOpen, TrendingDown, Sparkles } from "lucide-react";
 
 type Message = {
   role: "user" | "assistant";
@@ -19,6 +20,7 @@ const AIAssistant = () => {
   ]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [currentMode, setCurrentMode] = useState<string>("general");
 
   const handleSend = async () => {
     if (!input.trim()) return;
@@ -46,6 +48,49 @@ const AIAssistant = () => {
     "帮我检查作业思路",
   ];
 
+  const aiFeatures = [
+    {
+      id: "quiz",
+      title: "AI 出题自检",
+      description: "生成练习题目，检验学习成果",
+      icon: FileQuestion,
+      color: "from-blue-500 to-cyan-500",
+      prompt: "请根据我最近学习的内容，为我出几道练习题来检验学习效果。"
+    },
+    {
+      id: "summary",
+      title: "AI 重点摘要",
+      description: "自动提取课程核心要点",
+      icon: BookOpen,
+      color: "from-purple-500 to-pink-500",
+      prompt: "请帮我总结最近学习课程的重点内容和核心概念。"
+    },
+    {
+      id: "analysis",
+      title: "AI 学习弱点分析",
+      description: "分析薄弱环节，针对性提升",
+      icon: TrendingDown,
+      color: "from-orange-500 to-red-500",
+      prompt: "根据我的作业和测验表现，分析我的学习弱点，并提供改进建议。"
+    }
+  ];
+
+  const startAIFeature = (feature: typeof aiFeatures[0]) => {
+    setCurrentMode(feature.id);
+    const featureMessage: Message = { role: "user", content: feature.prompt };
+    setMessages((prev) => [...prev, featureMessage]);
+    setIsLoading(true);
+
+    setTimeout(() => {
+      const aiMessage: Message = {
+        role: "assistant",
+        content: `好的，我将为您提供${feature.title}服务。让我分析一下...`,
+      };
+      setMessages((prev) => [...prev, aiMessage]);
+      setIsLoading(false);
+    }, 1000);
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -61,6 +106,11 @@ const AIAssistant = () => {
                 <Bot className="w-5 h-5 text-primary-foreground" />
               </div>
               对话窗口
+              {currentMode !== "general" && (
+                <Badge variant="secondary" className="ml-auto">
+                  {aiFeatures.find(f => f.id === currentMode)?.title}
+                </Badge>
+              )}
             </CardTitle>
             <CardDescription>与 AI 助教实时对话</CardDescription>
           </CardHeader>
@@ -154,7 +204,43 @@ const AIAssistant = () => {
 
           <Card className="border-border/50">
             <CardHeader>
-              <CardTitle>AI 助教功能</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-primary" />
+                AI 智能功能
+              </CardTitle>
+              <CardDescription>选择 AI 助教特色功能</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {aiFeatures.map((feature) => {
+                const Icon = feature.icon;
+                return (
+                  <Card
+                    key={feature.id}
+                    className="border-border/50 cursor-pointer hover:border-primary/50 transition-all group"
+                    onClick={() => startAIFeature(feature)}
+                  >
+                    <CardContent className="p-4">
+                      <div className="flex items-start gap-3">
+                        <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${feature.color} flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform`}>
+                          <Icon className="w-5 h-5 text-white" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-semibold text-sm mb-1">{feature.title}</h4>
+                          <p className="text-xs text-muted-foreground line-clamp-2">
+                            {feature.description}
+                          </p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </CardContent>
+          </Card>
+
+          <Card className="border-border/50">
+            <CardHeader>
+              <CardTitle>基础功能</CardTitle>
             </CardHeader>
             <CardContent>
               <ul className="space-y-3 text-sm text-muted-foreground">
