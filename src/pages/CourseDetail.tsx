@@ -5,6 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { useToast } from "@/hooks/use-toast";
 import { 
   ArrowLeft, 
   BookOpen, 
@@ -15,12 +20,48 @@ import {
   Play,
   CheckCircle2,
   Clock,
-  Calendar
+  Calendar,
+  Plus,
+  Upload
 } from "lucide-react";
 
 const CourseDetail = () => {
   const { courseId } = useParams();
   const navigate = useNavigate();
+  const { toast } = useToast();
+
+  // 模拟用户角色 - 在实际应用中应该从认证系统获取
+  const [isTeacher] = useState(true); // 改为 false 可查看学生视图
+
+  // 对话框状态
+  const [isMaterialDialogOpen, setIsMaterialDialogOpen] = useState(false);
+  const [isAssignmentDialogOpen, setIsAssignmentDialogOpen] = useState(false);
+  const [isQuizDialogOpen, setIsQuizDialogOpen] = useState(false);
+  const [isSurveyDialogOpen, setIsSurveyDialogOpen] = useState(false);
+
+  // 表单状态
+  const [materialForm, setMaterialForm] = useState({
+    name: "",
+    type: "PDF",
+    file: null as File | null,
+  });
+
+  const [assignmentForm, setAssignmentForm] = useState({
+    name: "",
+    deadline: "",
+    description: "",
+  });
+
+  const [quizForm, setQuizForm] = useState({
+    name: "",
+    questions: "",
+    time: "",
+  });
+
+  const [surveyForm, setSurveyForm] = useState({
+    name: "",
+    description: "",
+  });
 
   // 模拟课程数据
   const course = {
@@ -94,6 +135,83 @@ const CourseDetail = () => {
 
   const [selectedWeek, setSelectedWeek] = useState(1);
   const currentWeekContent = weeklyContent.find(w => w.week === selectedWeek);
+
+  // 发布资料
+  const handlePublishMaterial = () => {
+    if (!materialForm.name) {
+      toast({
+        title: "请填写资料名称",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    toast({
+      title: "资料发布成功",
+      description: `${materialForm.name} 已发布到第 ${selectedWeek} 周`,
+    });
+
+    setMaterialForm({ name: "", type: "PDF", file: null });
+    setIsMaterialDialogOpen(false);
+  };
+
+  // 发布作业
+  const handlePublishAssignment = () => {
+    if (!assignmentForm.name || !assignmentForm.deadline) {
+      toast({
+        title: "请填写完整信息",
+        description: "作业名称和截止日期不能为空",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    toast({
+      title: "作业发布成功",
+      description: `${assignmentForm.name} 已发布到第 ${selectedWeek} 周`,
+    });
+
+    setAssignmentForm({ name: "", deadline: "", description: "" });
+    setIsAssignmentDialogOpen(false);
+  };
+
+  // 发布测验
+  const handlePublishQuiz = () => {
+    if (!quizForm.name || !quizForm.questions || !quizForm.time) {
+      toast({
+        title: "请填写完整信息",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    toast({
+      title: "测验发布成功",
+      description: `${quizForm.name} 已发布到第 ${selectedWeek} 周`,
+    });
+
+    setQuizForm({ name: "", questions: "", time: "" });
+    setIsQuizDialogOpen(false);
+  };
+
+  // 发布问卷
+  const handlePublishSurvey = () => {
+    if (!surveyForm.name) {
+      toast({
+        title: "请填写问卷名称",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    toast({
+      title: "问卷发布成功",
+      description: `${surveyForm.name} 已发布到第 ${selectedWeek} 周`,
+    });
+
+    setSurveyForm({ name: "", description: "" });
+    setIsSurveyDialogOpen(false);
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -224,6 +342,70 @@ const CourseDetail = () => {
 
               {/* 学习资料 */}
               <TabsContent value="materials" className="space-y-4">
+                {isTeacher && (
+                  <Dialog open={isMaterialDialogOpen} onOpenChange={setIsMaterialDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button className="w-full bg-gradient-to-r from-primary to-accent hover:opacity-90">
+                        <Plus className="w-4 h-4 mr-2" />
+                        发布学习资料
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-[500px] bg-card">
+                      <DialogHeader>
+                        <DialogTitle>发布学习资料</DialogTitle>
+                        <DialogDescription>
+                          为第 {selectedWeek} 周添加学习资料
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="grid gap-4 py-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="material-name">资料名称 *</Label>
+                          <Input
+                            id="material-name"
+                            value={materialForm.name}
+                            onChange={(e) => setMaterialForm({ ...materialForm, name: e.target.value })}
+                            placeholder="例如：第一章课件.pdf"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="material-type">资料类型</Label>
+                          <select
+                            id="material-type"
+                            value={materialForm.type}
+                            onChange={(e) => setMaterialForm({ ...materialForm, type: e.target.value })}
+                            className="w-full px-3 py-2 border border-input rounded-md bg-background"
+                          >
+                            <option value="PDF">PDF</option>
+                            <option value="PPT">PPT</option>
+                            <option value="视频">视频</option>
+                            <option value="Notebook">Notebook</option>
+                            <option value="其他">其他</option>
+                          </select>
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="material-file">上传文件</Label>
+                          <div className="flex items-center gap-2">
+                            <Input
+                              id="material-file"
+                              type="file"
+                              onChange={(e) => setMaterialForm({ ...materialForm, file: e.target.files?.[0] || null })}
+                            />
+                            <Upload className="w-5 h-5 text-muted-foreground" />
+                          </div>
+                        </div>
+                      </div>
+                      <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsMaterialDialogOpen(false)}>
+                          取消
+                        </Button>
+                        <Button onClick={handlePublishMaterial} className="bg-gradient-to-r from-primary to-accent hover:opacity-90">
+                          发布
+                        </Button>
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
+                )}
+
                 {currentWeekContent.materials.length > 0 ? (
                   currentWeekContent.materials.map((material) => (
                     <Card key={material.id} className="border-border/50 hover:shadow-md transition-all duration-200">
@@ -272,6 +454,63 @@ const CourseDetail = () => {
 
               {/* 作业 */}
               <TabsContent value="assignments" className="space-y-4">
+                {isTeacher && (
+                  <Dialog open={isAssignmentDialogOpen} onOpenChange={setIsAssignmentDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button className="w-full bg-gradient-to-r from-primary to-accent hover:opacity-90">
+                        <Plus className="w-4 h-4 mr-2" />
+                        发布作业
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-[500px] bg-card">
+                      <DialogHeader>
+                        <DialogTitle>发布作业</DialogTitle>
+                        <DialogDescription>
+                          为第 {selectedWeek} 周添加作业
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="grid gap-4 py-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="assignment-name">作业名称 *</Label>
+                          <Input
+                            id="assignment-name"
+                            value={assignmentForm.name}
+                            onChange={(e) => setAssignmentForm({ ...assignmentForm, name: e.target.value })}
+                            placeholder="例如：第一周作业：AI概念理解"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="assignment-deadline">截止日期 *</Label>
+                          <Input
+                            id="assignment-deadline"
+                            type="date"
+                            value={assignmentForm.deadline}
+                            onChange={(e) => setAssignmentForm({ ...assignmentForm, deadline: e.target.value })}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="assignment-description">作业说明</Label>
+                          <Textarea
+                            id="assignment-description"
+                            value={assignmentForm.description}
+                            onChange={(e) => setAssignmentForm({ ...assignmentForm, description: e.target.value })}
+                            placeholder="描述作业要求和注意事项..."
+                            rows={4}
+                          />
+                        </div>
+                      </div>
+                      <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsAssignmentDialogOpen(false)}>
+                          取消
+                        </Button>
+                        <Button onClick={handlePublishAssignment} className="bg-gradient-to-r from-primary to-accent hover:opacity-90">
+                          发布
+                        </Button>
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
+                )}
+
                 {currentWeekContent.assignments.length > 0 ? (
                   currentWeekContent.assignments.map((assignment) => (
                     <Card key={assignment.id} className="border-border/50 hover:shadow-md transition-all duration-200">
@@ -320,6 +559,63 @@ const CourseDetail = () => {
 
               {/* 测验 */}
               <TabsContent value="quizzes" className="space-y-4">
+                {isTeacher && (
+                  <Dialog open={isQuizDialogOpen} onOpenChange={setIsQuizDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button className="w-full bg-gradient-to-r from-primary to-accent hover:opacity-90">
+                        <Plus className="w-4 h-4 mr-2" />
+                        发布测验
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-[500px] bg-card">
+                      <DialogHeader>
+                        <DialogTitle>发布测验</DialogTitle>
+                        <DialogDescription>
+                          为第 {selectedWeek} 周添加测验
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="grid gap-4 py-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="quiz-name">测验名称 *</Label>
+                          <Input
+                            id="quiz-name"
+                            value={quizForm.name}
+                            onChange={(e) => setQuizForm({ ...quizForm, name: e.target.value })}
+                            placeholder="例如：第一周测验"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="quiz-questions">题目数量 *</Label>
+                          <Input
+                            id="quiz-questions"
+                            type="number"
+                            value={quizForm.questions}
+                            onChange={(e) => setQuizForm({ ...quizForm, questions: e.target.value })}
+                            placeholder="例如：10"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="quiz-time">答题时长 *</Label>
+                          <Input
+                            id="quiz-time"
+                            value={quizForm.time}
+                            onChange={(e) => setQuizForm({ ...quizForm, time: e.target.value })}
+                            placeholder="例如：30分钟"
+                          />
+                        </div>
+                      </div>
+                      <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsQuizDialogOpen(false)}>
+                          取消
+                        </Button>
+                        <Button onClick={handlePublishQuiz} className="bg-gradient-to-r from-primary to-accent hover:opacity-90">
+                          发布
+                        </Button>
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
+                )}
+
                 {currentWeekContent.quizzes.length > 0 ? (
                   currentWeekContent.quizzes.map((quiz) => (
                     <Card key={quiz.id} className="border-border/50 hover:shadow-md transition-all duration-200">
@@ -367,6 +663,54 @@ const CourseDetail = () => {
 
               {/* 问卷 */}
               <TabsContent value="surveys" className="space-y-4">
+                {isTeacher && (
+                  <Dialog open={isSurveyDialogOpen} onOpenChange={setIsSurveyDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button className="w-full bg-gradient-to-r from-primary to-accent hover:opacity-90">
+                        <Plus className="w-4 h-4 mr-2" />
+                        发布问卷
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-[500px] bg-card">
+                      <DialogHeader>
+                        <DialogTitle>发布问卷</DialogTitle>
+                        <DialogDescription>
+                          为第 {selectedWeek} 周添加问卷
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="grid gap-4 py-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="survey-name">问卷名称 *</Label>
+                          <Input
+                            id="survey-name"
+                            value={surveyForm.name}
+                            onChange={(e) => setSurveyForm({ ...surveyForm, name: e.target.value })}
+                            placeholder="例如：课程满意度调查"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="survey-description">问卷说明</Label>
+                          <Textarea
+                            id="survey-description"
+                            value={surveyForm.description}
+                            onChange={(e) => setSurveyForm({ ...surveyForm, description: e.target.value })}
+                            placeholder="描述问卷目的和内容..."
+                            rows={4}
+                          />
+                        </div>
+                      </div>
+                      <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsSurveyDialogOpen(false)}>
+                          取消
+                        </Button>
+                        <Button onClick={handlePublishSurvey} className="bg-gradient-to-r from-primary to-accent hover:opacity-90">
+                          发布
+                        </Button>
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
+                )}
+
                 {currentWeekContent.surveys.length > 0 ? (
                   currentWeekContent.surveys.map((survey) => (
                     <Card key={survey.id} className="border-border/50 hover:shadow-md transition-all duration-200">
