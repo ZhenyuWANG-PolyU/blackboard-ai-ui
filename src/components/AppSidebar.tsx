@@ -30,7 +30,7 @@ export function AppSidebar() {
 
   return (
     <Sidebar
-      className={collapsed ? "w-16" : "w-64"}
+      className={collapsed ? "w-16" : "w-72"}
       collapsible="icon"
       style={{
         background: 'var(--gradient-sidebar)',
@@ -38,24 +38,24 @@ export function AppSidebar() {
         borderRight: '1px solid hsl(var(--sidebar-border))'
       }}
     >
-      <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupLabel className={collapsed ? "text-center" : "text-base font-semibold tracking-wide"}>
+      <SidebarContent className="py-6">
+        <SidebarGroup className="px-3">
+          <SidebarGroupLabel className={collapsed ? "text-center mb-4" : "text-base font-semibold tracking-wide mb-6 px-3 text-sidebar-foreground/80"}>
             {!collapsed && "导航菜单"}
           </SidebarGroupLabel>
 
           <SidebarGroupContent>
-            <SidebarMenu>
+            <SidebarMenu className="space-y-2">
               {menuItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
+                  <SidebarMenuButton asChild className="h-12">
                     <NavLink
                       to={item.url}
                       end
-                      className="hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground transition-all duration-300 rounded-lg"
+                      className="hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground transition-all duration-300 rounded-xl px-4"
                       activeClassName="bg-primary/15 text-primary font-semibold border-l-4 border-primary shadow-md"
                     >
-                      <item.icon className={collapsed ? "mx-auto" : "mr-3 h-5 w-5"} />
+                      <item.icon className={collapsed ? "mx-auto h-5 w-5" : "mr-4 h-5 w-5"} />
                       {!collapsed && <span className="text-base font-medium">{item.title}</span>}
                     </NavLink>
                   </SidebarMenuButton>
