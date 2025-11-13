@@ -1,4 +1,5 @@
 import { useState } from "react";
+import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -40,15 +41,33 @@ const Auth = () => {
       return;
     }
 
-    // Simulate API call
-    setTimeout(() => {
+    try {
+      const response = await axios.post("/api/user_login", {
+        user_email: email,
+        user_pwd: password,
+      });
+      console.log(response.data);
+
       toast({
         title: isLogin ? "登录成功！" : "注册成功！",
         description: isLogin ? "欢迎回到 AI BlackBoard" : "您的账户已创建",
       });
-      setIsLoading(false);
+      
+      // 如果后端返回 token，可以保存到 localStorage
+      if (response.data.code) {
+        localStorage.setItem("token", response.data.code.token);
+      }
+      
       navigate("/dashboard");
-    }, 1500);
+    } catch (error: any) {
+      toast({
+        title: "错误",
+        description: error.response?.data?.message || "操作失败，请重试",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
