@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Bot, Send, User, FileQuestion, BookOpen, TrendingDown, Sparkles } from "lucide-react";
 
 type Message = {
@@ -21,6 +23,17 @@ const AIAssistant = () => {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [currentMode, setCurrentMode] = useState<string>("general");
+  const [isCourseSelectOpen, setIsCourseSelectOpen] = useState(false);
+  const [selectedFeature, setSelectedFeature] = useState<typeof aiFeatures[0] | null>(null);
+  const [selectedCourses, setSelectedCourses] = useState<number[]>([]);
+
+  // 模拟课程数据
+  const courses = [
+    { id: 1, title: "人工智能基础", instructor: "张教授" },
+    { id: 2, title: "数据结构与算法", instructor: "李教授" },
+    { id: 3, title: "机器学习实战", instructor: "王教授" },
+    { id: 4, title: "深度学习进阶", instructor: "刘教授" },
+  ];
 
   const handleSend = async () => {
     if (!input.trim()) return;
@@ -76,15 +89,43 @@ const AIAssistant = () => {
   ];
 
   const startAIFeature = (feature: typeof aiFeatures[0]) => {
-    setCurrentMode(feature.id);
-    const featureMessage: Message = { role: "user", content: feature.prompt };
+    setSelectedFeature(feature);
+    setSelectedCourses([]);
+    setIsCourseSelectOpen(true);
+  };
+
+  const handleCourseToggle = (courseId: number) => {
+    setSelectedCourses(prev => 
+      prev.includes(courseId) 
+        ? prev.filter(id => id !== courseId)
+        : [...prev, courseId]
+    );
+  };
+
+  const handleConfirmCourses = () => {
+    if (!selectedFeature) return;
+    if (selectedCourses.length === 0) {
+      return;
+    }
+
+    const selectedCourseNames = courses
+      .filter(c => selectedCourses.includes(c.id))
+      .map(c => c.title)
+      .join("、");
+
+    setCurrentMode(selectedFeature.id);
+    const featureMessage: Message = { 
+      role: "user", 
+      content: `${selectedFeature.prompt}（课程范围：${selectedCourseNames}）` 
+    };
     setMessages((prev) => [...prev, featureMessage]);
     setIsLoading(true);
+    setIsCourseSelectOpen(false);
 
     setTimeout(() => {
       const aiMessage: Message = {
         role: "assistant",
-        content: `好的，我将为您提供${feature.title}服务。让我分析一下...`,
+        content: `好的，我将针对"${selectedCourseNames}"为您提供${selectedFeature.title}服务。让我分析一下...`,
       };
       setMessages((prev) => [...prev, aiMessage]);
       setIsLoading(false);
@@ -265,6 +306,66 @@ const AIAssistant = () => {
           </Card>
         </div>
       </div>
+
+      {/* 课程选择对话框 */}
+      <Dialog open={isCourseSelectOpen} onOpenChange={setIsCourseSelectOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              {selectedFeature && (
+                <>
+                  <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${selectedFeature.color} flex items-center justify-center`}>
+                    <selectedFeature.icon className="w-4 h-4 text-white" />
+                  </div>
+                  {selectedFeature.title}
+                </>
+              )}
+            </DialogTitle>
+            <DialogDescription>
+              请选择要分析的课程范围，可以选择多个课程
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="py-4">
+            <ScrollArea className="h-[300px] pr-4">
+              <div className="space-y-3">
+                {courses.map((course) => (
+                  <div
+                    key={course.id}
+                    className="flex items-start space-x-3 p-3 rounded-lg border border-border/50 hover:border-primary/50 transition-colors cursor-pointer"
+                    onClick={() => handleCourseToggle(course.id)}
+                  >
+                    <Checkbox
+                      checked={selectedCourses.includes(course.id)}
+                      onCheckedChange={() => handleCourseToggle(course.id)}
+                      className="mt-1"
+                    />
+                    <div className="flex-1">
+                      <h4 className="font-semibold text-sm">{course.title}</h4>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        授课教师：{course.instructor}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </ScrollArea>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsCourseSelectOpen(false)}>
+              取消
+            </Button>
+            <Button 
+              onClick={handleConfirmCourses}
+              disabled={selectedCourses.length === 0}
+              className="bg-gradient-to-r from-primary to-accent hover:opacity-90"
+            >
+              确认（已选 {selectedCourses.length} 门课程）
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
