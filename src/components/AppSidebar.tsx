@@ -32,6 +32,11 @@ export function AppSidebar() {
     <Sidebar
       className={collapsed ? "w-16" : "w-64"}
       collapsible="icon"
+      style={{
+        background: 'var(--gradient-sidebar)',
+        boxShadow: 'var(--shadow-sidebar)',
+        borderRight: '1px solid hsl(var(--sidebar-border))'
+      }}
     >
       <SidebarContent>
         <SidebarGroup>
@@ -47,8 +52,8 @@ export function AppSidebar() {
                     <NavLink
                       to={item.url}
                       end
-                      className="hover:bg-secondary/80 transition-colors duration-200"
-                      activeClassName="bg-primary/10 text-primary font-semibold border-l-4 border-primary"
+                      className="hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground transition-all duration-300 rounded-lg"
+                      activeClassName="bg-primary/15 text-primary font-semibold border-l-4 border-primary shadow-md"
                     >
                       <item.icon className={collapsed ? "mx-auto" : "mr-3 h-5 w-5"} />
                       {!collapsed && <span className="text-base font-medium">{item.title}</span>}
