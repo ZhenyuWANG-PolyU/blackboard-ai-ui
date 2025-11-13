@@ -70,7 +70,7 @@ export function AppHeader() {
                 <User className="mr-2 h-4 w-4" />
                 <span>个人资料</span>
               </DropdownMenuItem>
-              <DropdownMenuItem className="cursor-pointer">
+              <DropdownMenuItem className="cursor-pointer" onClick={() => navigate("/settings")}>
                 <Settings className="mr-2 h-4 w-4" />
                 <span>设置</span>
               </DropdownMenuItem>
