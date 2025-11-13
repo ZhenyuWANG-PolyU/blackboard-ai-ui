@@ -2,8 +2,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { FileText, Download, Search } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const Materials = () => {
+  const navigate = useNavigate();
+
   const materials = [
     { title: "机器学习导论.pdf", course: "人工智能基础", size: "2.3 MB", date: "2024-01-15" },
     { title: "算法设计课件.pptx", course: "算法设计", size: "5.1 MB", date: "2024-01-14" },
@@ -39,7 +42,11 @@ const Materials = () => {
 
       <div className="grid gap-4">
         {materials.map((material, index) => (
-          <Card key={index} className="border-border/50 hover:shadow-md transition-all duration-200">
+          <Card 
+            key={index} 
+            className="border-border/50 hover:shadow-md transition-all duration-200 cursor-pointer"
+            onClick={() => navigate(`/materials/${index + 1}`)}
+          >
             <CardHeader>
               <div className="flex items-start gap-4">
                 <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center flex-shrink-0">
@@ -55,7 +62,15 @@ const Materials = () => {
                     <span>{material.date}</span>
                   </CardDescription>
                 </div>
-                <Button size="icon" variant="ghost" className="flex-shrink-0">
+                <Button 
+                  size="icon" 
+                  variant="ghost" 
+                  className="flex-shrink-0"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    // 下载逻辑
+                  }}
+                >
                   <Download className="h-4 w-4" />
                 </Button>
               </div>

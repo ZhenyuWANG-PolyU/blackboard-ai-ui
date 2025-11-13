@@ -10,7 +10,9 @@ import Dashboard from "./pages/Dashboard";
 import Courses from "./pages/Courses";
 import CourseDetail from "./pages/CourseDetail";
 import Materials from "./pages/Materials";
+import MaterialDetail from "./pages/MaterialDetail";
 import Assignments from "./pages/Assignments";
+import AssignmentDetail from "./pages/AssignmentDetail";
 import Statistics from "./pages/Statistics";
 import AIAssistant from "./pages/AIAssistant";
 import Profile from "./pages/Profile";
@@ -33,7 +35,9 @@ const App = () => (
             <Route path="/courses" element={<Courses />} />
             <Route path="/courses/:courseId" element={<CourseDetail />} />
             <Route path="/materials" element={<Materials />} />
+            <Route path="/materials/:materialId" element={<MaterialDetail />} />
             <Route path="/assignments" element={<Assignments />} />
+            <Route path="/assignments/:assignmentId" element={<AssignmentDetail />} />
             <Route path="/statistics" element={<Statistics />} />
             <Route path="/ai-assistant" element={<AIAssistant />} />
             <Route path="/profile" element={<Profile />} />
