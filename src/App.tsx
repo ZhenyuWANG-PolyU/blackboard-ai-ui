@@ -10,6 +10,7 @@ import Dashboard from "./pages/Dashboard";
 import Courses from "./pages/Courses";
 import Materials from "./pages/Materials";
 import Assignments from "./pages/Assignments";
+import Statistics from "./pages/Statistics";
 import AIAssistant from "./pages/AIAssistant";
 import Profile from "./pages/Profile";
 import Settings from "./pages/Settings";
@@ -31,6 +32,7 @@ const App = () => (
             <Route path="/courses" element={<Courses />} />
             <Route path="/materials" element={<Materials />} />
             <Route path="/assignments" element={<Assignments />} />
+            <Route path="/statistics" element={<Statistics />} />
             <Route path="/ai-assistant" element={<AIAssistant />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/settings" element={<Settings />} />
