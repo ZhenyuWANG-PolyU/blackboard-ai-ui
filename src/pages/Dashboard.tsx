@@ -1,7 +1,10 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { BookOpen, FileText, ClipboardCheck, TrendingUp } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const Dashboard = () => {
+  const navigate = useNavigate();
+
   const stats = [
     {
       title: "进行中的课程",
@@ -9,6 +12,7 @@ const Dashboard = () => {
       description: "本学期课程",
       icon: BookOpen,
       gradient: "from-blue-500 to-cyan-500",
+      link: "/courses",
     },
     {
       title: "学习资料",
@@ -16,6 +20,7 @@ const Dashboard = () => {
       description: "已收藏资料",
       icon: FileText,
       gradient: "from-purple-500 to-pink-500",
+      link: "/materials",
     },
     {
       title: "待完成作业",
@@ -23,6 +28,7 @@ const Dashboard = () => {
       description: "本周截止",
       icon: ClipboardCheck,
       gradient: "from-orange-500 to-red-500",
+      link: "/assignments",
     },
     {
       title: "学习进度",
@@ -30,6 +36,7 @@ const Dashboard = () => {
       description: "总体完成度",
       icon: TrendingUp,
       gradient: "from-green-500 to-emerald-500",
+      link: "/profile",
     },
   ];
 
@@ -44,7 +51,8 @@ const Dashboard = () => {
         {stats.map((stat) => (
           <Card 
             key={stat.title} 
-            className="border-border/50 hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
+            className="border-border/50 hover:shadow-lg transition-all duration-300 hover:-translate-y-1 cursor-pointer"
+            onClick={() => navigate(stat.link)}
           >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
