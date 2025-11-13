@@ -36,7 +36,7 @@ const Dashboard = () => {
       description: "总体完成度",
       icon: TrendingUp,
       gradient: "from-green-500 to-emerald-500",
-      link: "/profile",
+      link: "/statistics",
     },
   ];
 
