@@ -30,31 +30,28 @@ export function AppSidebar() {
 
   return (
     <Sidebar
-      className={`${collapsed ? "w-16" : "w-72"} border-r border-sidebar-border shadow-[4px_0_16px_hsl(var(--primary)/0.08)]`}
+      className={collapsed ? "w-16" : "w-64"}
       collapsible="icon"
-      style={{
-        background: 'var(--gradient-sidebar)',
-      }}
     >
-      <SidebarContent className="py-6 px-2">
-        <SidebarGroup className="px-1">
-          <SidebarGroupLabel className={collapsed ? "text-center mb-4 px-0" : "text-base font-semibold tracking-wide mb-6 px-3 text-sidebar-foreground/80"}>
+      <SidebarContent>
+        <SidebarGroup>
+          <SidebarGroupLabel className={collapsed ? "text-center" : ""}>
             {!collapsed && "导航菜单"}
           </SidebarGroupLabel>
 
           <SidebarGroupContent>
-            <SidebarMenu className="space-y-2">
+            <SidebarMenu>
               {menuItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild className={collapsed ? "h-12 justify-center" : "h-12"}>
+                  <SidebarMenuButton asChild>
                     <NavLink
                       to={item.url}
                       end
-                      className="hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground transition-all duration-300 rounded-xl"
-                      activeClassName="bg-primary/15 text-primary font-semibold border-l-4 border-primary shadow-md"
+                      className="hover:bg-secondary/80 transition-colors duration-200"
+                      activeClassName="bg-primary/10 text-primary font-semibold border-l-4 border-primary"
                     >
-                      <item.icon className={collapsed ? "h-5 w-5" : "mr-4 h-5 w-5 flex-shrink-0"} />
-                      {!collapsed && <span className="text-base font-medium truncate">{item.title}</span>}
+                      <item.icon className={collapsed ? "mx-auto" : "mr-3 h-5 w-5"} />
+                      {!collapsed && <span>{item.title}</span>}
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
