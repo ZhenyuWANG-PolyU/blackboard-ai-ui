@@ -11,6 +11,7 @@ import Courses from "./pages/Courses";
 import Materials from "./pages/Materials";
 import Assignments from "./pages/Assignments";
 import AIAssistant from "./pages/AIAssistant";
+import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -30,6 +31,7 @@ const App = () => (
             <Route path="/materials" element={<Materials />} />
             <Route path="/assignments" element={<Assignments />} />
             <Route path="/ai-assistant" element={<AIAssistant />} />
+            <Route path="/profile" element={<Profile />} />
           </Route>
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
