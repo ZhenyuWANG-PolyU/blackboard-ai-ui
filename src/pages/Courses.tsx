@@ -4,12 +4,18 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
-import { BookOpen, Clock, Users, Plus, BookmarkPlus, Trash2 } from "lucide-react";
+import { BookOpen, Clock, Users, Plus, BookmarkPlus, MoreVertical, Trash2, Star } from "lucide-react";
 
 const Courses = () => {
   const navigate = useNavigate();
@@ -313,18 +319,56 @@ const Courses = () => {
         {myCourses.map((course) => (
           <Card 
             key={course.id} 
-            className="border-border/50 hover:shadow-lg transition-all duration-300 hover:-translate-y-1 cursor-pointer relative"
+            className="border-border/50 hover:shadow-lg transition-all duration-300 hover:-translate-y-1 cursor-pointer relative group"
             onClick={() => navigate(`/courses/${course.id}`)}
           >
-            {/* 删除按钮 */}
-            <Button
-              size="icon"
-              variant="ghost"
-              className="absolute top-3 right-3 z-10 h-8 w-8 hover:bg-destructive/10 text-destructive hover:text-destructive"
-              onClick={(e) => handleRemoveCourse(course.id, course.title, e)}
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
+            {/* 三点菜单 */}
+            <div className="absolute top-3 right-3 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="h-8 w-8 rounded-full hover:bg-secondary"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <MoreVertical className="h-4 w-4 text-muted-foreground" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48 bg-card">
+                  <DropdownMenuItem 
+                    className="cursor-pointer"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate(`/courses/${course.id}`);
+                    }}
+                  >
+                    <BookOpen className="mr-2 h-4 w-4" />
+                    查看详情
+                  </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    className="cursor-pointer"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toast({
+                        title: "功能开发中",
+                        description: "收藏功能即将上线",
+                      });
+                    }}
+                  >
+                    <Star className="mr-2 h-4 w-4" />
+                    收藏课程
+                  </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    className="cursor-pointer text-destructive focus:text-destructive"
+                    onClick={(e) => handleRemoveCourse(course.id, course.title, e)}
+                  >
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    移除课程
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
 
             <CardHeader>
               <div className={`w-full h-32 rounded-lg bg-gradient-to-br ${course.color} mb-4 flex items-center justify-center`}>
