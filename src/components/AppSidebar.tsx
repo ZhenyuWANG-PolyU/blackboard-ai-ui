@@ -1,4 +1,4 @@
-import { Home, BookOpen, FileText, ClipboardCheck, Bot } from "lucide-react";
+import { Home, BookOpen, FileText, ClipboardCheck, TrendingUp, Bot } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
 
@@ -19,6 +19,7 @@ const menuItems = [
   { title: "课程", url: "/courses", icon: BookOpen },
   { title: "学习资料", url: "/materials", icon: FileText },
   { title: "作业与评测", url: "/assignments", icon: ClipboardCheck },
+  { title: "学习统计", url: "/statistics", icon: TrendingUp },
   { title: "AI 助教", url: "/ai-assistant", icon: Bot },
 ];
 
