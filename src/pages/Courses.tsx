@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -11,6 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { BookOpen, Clock, Users, Plus, BookmarkPlus } from "lucide-react";
 
 const Courses = () => {
+  const navigate = useNavigate();
   const { toast } = useToast();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isSelectDialogOpen, setIsSelectDialogOpen] = useState(false);
@@ -297,7 +299,11 @@ const Courses = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {myCourses.map((course) => (
-          <Card key={course.id} className="border-border/50 hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
+          <Card 
+            key={course.id} 
+            className="border-border/50 hover:shadow-lg transition-all duration-300 hover:-translate-y-1 cursor-pointer"
+            onClick={() => navigate(`/courses/${course.id}`)}
+          >
             <CardHeader>
               <div className={`w-full h-32 rounded-lg bg-gradient-to-br ${course.color} mb-4 flex items-center justify-center`}>
                 <BookOpen className="w-16 h-16 text-white" />
@@ -335,7 +341,14 @@ const Courses = () => {
                 </div>
               </div>
 
-              <Button className="w-full" variant="outline">
+              <Button 
+                className="w-full" 
+                variant="outline"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigate(`/courses/${course.id}`);
+                }}
+              >
                 继续学习
               </Button>
             </CardContent>
