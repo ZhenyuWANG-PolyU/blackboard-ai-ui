@@ -3,8 +3,11 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ClipboardCheck, Clock, CheckCircle2 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const Assignments = () => {
+  const navigate = useNavigate();
+
   const pendingAssignments = [
     {
       title: "机器学习项目实现",
@@ -59,7 +62,11 @@ const Assignments = () => {
 
         <TabsContent value="pending" className="space-y-4">
           {pendingAssignments.map((assignment, index) => (
-            <Card key={index} className="border-border/50 hover:shadow-md transition-all duration-200">
+            <Card 
+              key={index} 
+              className="border-border/50 hover:shadow-md transition-all duration-200 cursor-pointer"
+              onClick={() => navigate(`/assignments/${index + 1}`)}
+            >
               <CardHeader>
                 <div className="flex items-start justify-between">
                   <div className="flex items-start gap-4 flex-1">
@@ -89,10 +96,24 @@ const Assignments = () => {
               </CardHeader>
               <CardContent>
                 <div className="flex gap-2">
-                  <Button className="flex-1 bg-gradient-to-r from-primary to-accent hover:opacity-90">
+                  <Button 
+                    className="flex-1 bg-gradient-to-r from-primary to-accent hover:opacity-90"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate(`/assignments/${index + 1}`);
+                    }}
+                  >
                     开始作业
                   </Button>
-                  <Button variant="outline">查看详情</Button>
+                  <Button 
+                    variant="outline"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate(`/assignments/${index + 1}`);
+                    }}
+                  >
+                    查看详情
+                  </Button>
                 </div>
               </CardContent>
             </Card>
@@ -101,7 +122,11 @@ const Assignments = () => {
 
         <TabsContent value="completed" className="space-y-4">
           {completedAssignments.map((assignment, index) => (
-            <Card key={index} className="border-border/50 hover:shadow-md transition-all duration-200">
+            <Card 
+              key={index} 
+              className="border-border/50 hover:shadow-md transition-all duration-200 cursor-pointer"
+              onClick={() => navigate(`/assignments/${pendingAssignments.length + index + 1}`)}
+            >
               <CardHeader>
                 <div className="flex items-start justify-between">
                   <div className="flex items-start gap-4 flex-1">
@@ -124,7 +149,14 @@ const Assignments = () => {
                 </div>
               </CardHeader>
               <CardContent>
-                <Button variant="outline" className="w-full">
+                <Button 
+                  variant="outline" 
+                  className="w-full"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigate(`/assignments/${pendingAssignments.length + index + 1}`);
+                  }}
+                >
                   查看评测详情
                 </Button>
               </CardContent>
