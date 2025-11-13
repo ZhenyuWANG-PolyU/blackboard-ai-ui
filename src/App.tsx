@@ -8,6 +8,7 @@ import Auth from "./pages/Auth";
 import { DashboardLayout } from "./components/DashboardLayout";
 import Dashboard from "./pages/Dashboard";
 import Courses from "./pages/Courses";
+import CourseDetail from "./pages/CourseDetail";
 import Materials from "./pages/Materials";
 import Assignments from "./pages/Assignments";
 import Statistics from "./pages/Statistics";
@@ -30,6 +31,7 @@ const App = () => (
           <Route element={<DashboardLayout />}>
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/courses" element={<Courses />} />
+            <Route path="/courses/:courseId" element={<CourseDetail />} />
             <Route path="/materials" element={<Materials />} />
             <Route path="/assignments" element={<Assignments />} />
             <Route path="/statistics" element={<Statistics />} />
