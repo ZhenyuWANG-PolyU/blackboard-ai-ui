@@ -35,7 +35,7 @@ export function AppSidebar() {
     >
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel className={collapsed ? "text-center" : ""}>
+          <SidebarGroupLabel className={collapsed ? "text-center" : "text-base font-semibold tracking-wide"}>
             {!collapsed && "导航菜单"}
           </SidebarGroupLabel>
 
@@ -51,7 +51,7 @@ export function AppSidebar() {
                       activeClassName="bg-primary/10 text-primary font-semibold border-l-4 border-primary"
                     >
                       <item.icon className={collapsed ? "mx-auto" : "mr-3 h-5 w-5"} />
-                      {!collapsed && <span>{item.title}</span>}
+                      {!collapsed && <span className="text-base font-medium">{item.title}</span>}
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
