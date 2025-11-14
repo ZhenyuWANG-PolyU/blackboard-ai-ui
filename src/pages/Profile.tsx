@@ -17,15 +17,19 @@ const Profile = () => {
 
   // 个人资料状态
   const [profile, setProfile] = useState({
+    user_id: "",
     avatar: "",
-    name: "张三",
-    email: "zhangsan@example.com",
-    studentId: "2024001",
-    phone: "138****8888",
-    bio: "热爱学习，积极向上的学生",
-    major: "计算机科学与技术",
-    grade: "2024级",
+    name: "",
+    email: "",
+    studentId: "",
+    phone: "",
+    bio: "",
+    major: "",
+    grade: "",
   });
+
+  // 编辑状态的临时数据
+  const [editForm, setEditForm] = useState(profile);
 
   useEffect(() => {
     async function fetchData() {
@@ -35,25 +39,26 @@ const Profile = () => {
           Authorization: `Bearer ${token}`,
         },
       });
-      console.log(res.data.payload)
-      if(res.data.code==20000){
-        setProfile({
+      // console.log(res.data.payload)
+      if (res.data.code == 20000 && res.data.payload) {
+        const newProfile = {
+          user_id: res.data.payload.user_id,
           avatar: "",
           name: res.data.payload.user_name,
           email: res.data.payload.user_email,
-          studentId: res.data.payload.user_id,
-          phone: res.data.payload.user_phone, 
-          bio: res.data.payload.user_bio, 
-          major: res.data.payload.user_major,
-          grade: res.data.payload.user_grade,
-        })
+          studentId: res.data.payload.student_id,
+          phone: res.data.payload.phone,
+          bio: res.data.payload.bio,
+          major: res.data.payload.major,
+          grade: res.data.payload.grade,
+        };
+        setProfile(newProfile);
+        setEditForm(newProfile); // 同时更新 editForm
       }
     }
     fetchData()
+    // console.log(profile)
   }, [])
-
-  // 编辑状态的临时数据
-  const [editForm, setEditForm] = useState(profile);
 
   const handleEdit = () => {
     setEditForm(profile);
@@ -65,19 +70,36 @@ const Profile = () => {
     setIsEditing(false);
   };
 
-  const handleSave = () => {
+  async function handleSave() {
     setIsSaving(true);
 
-    // 模拟保存操作
-    setTimeout(() => {
-      setProfile(editForm);
-      setIsEditing(false);
-      setIsSaving(false);
-      toast({
-        title: "保存成功",
-        description: "您的个人资料已更新",
-      });
-    }, 1000);
+    const res = await axios.post('/api/update_user_info', {
+      user_id: editForm.user_id,
+      user_name: editForm.name,
+      user_email: editForm.email,
+      student_id: editForm.studentId,
+      phone: editForm.phone,
+      bio: editForm.bio,
+      major: editForm.major,
+      grade: editForm.grade,
+
+    }, {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('token')}`,
+      }
+    });
+    setProfile(editForm);
+    setIsEditing(false);
+    setIsSaving(false);
+    toast({
+      title: "保存成功",
+      description: "您的个人资料已更新",
+    });
+    const res2 = await axios.post('/api/new_token',{
+      user_email: editForm.email,
+    })
+    console.log(res2.data)
+    localStorage.setItem("token", res2.data.token);
   };
 
   const handleAvatarUpload = (e: React.ChangeEvent<HTMLInputElement>) => {

@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { 
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -16,6 +16,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
 import { BookOpen, Clock, Users, Plus, BookmarkPlus, MoreVertical, Trash2, Star } from "lucide-react";
+import axios from "axios";
 
 const Courses = () => {
   const navigate = useNavigate();
@@ -107,7 +108,7 @@ const Courses = () => {
   });
 
   // 添加课程到系统
-  const handleAddCourse = () => {
+  async function handleAddCourse() {
     if (!newCourse.title || !newCourse.instructor || !newCourse.hours) {
       toast({
         title: "请填写完整信息",
@@ -116,6 +117,17 @@ const Courses = () => {
       });
       return;
     }
+    const res = await axios.post("/api/add_course", {
+      course_id: "",
+      course_name: newCourse.title,
+      teacher_id: "",
+      teacher_name: newCourse.instructor,
+      course_info: newCourse.description,
+      bei1: newCourse.hours, // 备用字段，课时
+    },
+      { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
+    );
+    console.log(res.data);
 
     const course = {
       id: Date.now(),
@@ -167,9 +179,9 @@ const Courses = () => {
   // 移除课程
   const handleRemoveCourse = (courseId: number, courseTitle: string, e: React.MouseEvent) => {
     e.stopPropagation(); // 阻止事件冒泡
-    
+
     setMyCourses(myCourses.filter(c => c.id !== courseId));
-    
+
     toast({
       title: "已移除课程",
       description: `${courseTitle} 已从您的课程列表中移除`,
@@ -317,8 +329,8 @@ const Courses = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {myCourses.map((course) => (
-          <Card 
-            key={course.id} 
+          <Card
+            key={course.id}
             className="border-border/50 hover:shadow-lg transition-all duration-300 hover:-translate-y-1 cursor-pointer relative group"
             onClick={() => navigate(`/courses/${course.id}`)}
           >
@@ -336,7 +348,7 @@ const Courses = () => {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-48 bg-card">
-                  <DropdownMenuItem 
+                  <DropdownMenuItem
                     className="cursor-pointer"
                     onClick={(e) => {
                       e.stopPropagation();
@@ -346,7 +358,7 @@ const Courses = () => {
                     <BookOpen className="mr-2 h-4 w-4" />
                     查看详情
                   </DropdownMenuItem>
-                  <DropdownMenuItem 
+                  <DropdownMenuItem
                     className="cursor-pointer"
                     onClick={(e) => {
                       e.stopPropagation();
@@ -359,7 +371,7 @@ const Courses = () => {
                     <Star className="mr-2 h-4 w-4" />
                     收藏课程
                   </DropdownMenuItem>
-                  <DropdownMenuItem 
+                  <DropdownMenuItem
                     className="cursor-pointer text-destructive focus:text-destructive"
                     onClick={(e) => handleRemoveCourse(course.id, course.title, e)}
                   >
@@ -407,8 +419,8 @@ const Courses = () => {
                 </div>
               </div>
 
-              <Button 
-                className="w-full" 
+              <Button
+                className="w-full"
                 variant="outline"
                 onClick={(e) => {
                   e.stopPropagation();
