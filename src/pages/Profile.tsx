@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,6 +7,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
 import { User, Mail, Phone, IdCard, Save, Upload } from "lucide-react";
+import axios from "axios";
+import { set } from "date-fns";
 
 const Profile = () => {
   const { toast } = useToast();
@@ -25,6 +27,31 @@ const Profile = () => {
     grade: "2024级",
   });
 
+  useEffect(() => {
+    async function fetchData() {
+      let token = localStorage.getItem('token')
+      const res = await axios.post('/api/user_verify', {}, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      console.log(res.data.payload)
+      if(res.data.code==20000){
+        setProfile({
+          avatar: "",
+          name: res.data.payload.user_name,
+          email: res.data.payload.user_email,
+          studentId: res.data.payload.user_id,
+          phone: res.data.payload.user_phone, 
+          bio: res.data.payload.user_bio, 
+          major: res.data.payload.user_major,
+          grade: res.data.payload.user_grade,
+        })
+      }
+    }
+    fetchData()
+  }, [])
+
   // 编辑状态的临时数据
   const [editForm, setEditForm] = useState(profile);
 
@@ -40,7 +67,7 @@ const Profile = () => {
 
   const handleSave = () => {
     setIsSaving(true);
-    
+
     // 模拟保存操作
     setTimeout(() => {
       setProfile(editForm);
@@ -72,7 +99,7 @@ const Profile = () => {
           <p className="text-muted-foreground text-lg">管理您的个人信息</p>
         </div>
         {!isEditing ? (
-          <Button 
+          <Button
             onClick={handleEdit}
             className="bg-gradient-to-r from-primary to-accent hover:opacity-90"
           >
@@ -83,8 +110,8 @@ const Profile = () => {
             <Button variant="outline" onClick={handleCancel}>
               取消
             </Button>
-            <Button 
-              onClick={handleSave} 
+            <Button
+              onClick={handleSave}
               disabled={isSaving}
               className="bg-gradient-to-r from-primary to-accent hover:opacity-90"
             >
