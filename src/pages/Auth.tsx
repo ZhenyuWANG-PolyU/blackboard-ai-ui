@@ -1,5 +1,5 @@
 import { useState } from "react";
-import axios from "axios";
+import axios, { AxiosResponse } from "axios";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -42,23 +42,44 @@ const Auth = () => {
     }
 
     try {
-      const response = await axios.post("/api/user_login", {
-        user_email: email,
-        user_pwd: password,
-      });
-      console.log(response.data);
-
-      toast({
-        title: isLogin ? "登录成功！" : "注册成功！",
-        description: isLogin ? "欢迎回到 AI BlackBoard" : "您的账户已创建",
-      });
-      
-      // 如果后端返回 token，可以保存到 localStorage
-      if (response.data.code) {
-        localStorage.setItem("token", response.data.code.token);
+      let response: AxiosResponse<any, any, {}>;
+      if (isLogin) {
+        response = await axios.post("/api/user_login", {
+          user_email: email,
+          user_pwd: password,
+        });
+      } else {
+        response = await axios.post("/api/user_register", {
+          user_id: "",
+          user_name: "default name",
+          user_email: email,
+          user_pwd: password,
+          role: "",
+        });
       }
-      
-      navigate("/dashboard");
+
+      // console.log(response.data);
+      if (response.data.code.code == 20000 && isLogin) {
+        localStorage.setItem("token", response.data.code.token);
+        toast({
+          title: isLogin ? "登录成功！" : "注册成功！",
+          description: isLogin ? "欢迎回到 AI BlackBoard" : "您的账户已创建",
+        });
+        navigate("/dashboard");
+      }
+      else if (response.data.code == 20000 && !isLogin) {
+        localStorage.setItem("token", response.data.token);
+        toast({
+          title: isLogin ? "登录成功！" : "注册成功！",
+          description: isLogin ? "欢迎回到 AI BlackBoard" : "您的账户已创建",
+        });
+        navigate("/dashboard");
+      } else {
+        toast({
+          title: isLogin ? "登录失败！" : "注册失败！",
+          description: isLogin ? "用户名或密码不正确" : "注册时发生错误",
+        });
+      }
     } catch (error: any) {
       toast({
         title: "错误",
