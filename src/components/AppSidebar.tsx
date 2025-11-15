@@ -1,4 +1,4 @@
-import { Home, BookOpen, FileText, ClipboardCheck, Brain, TrendingUp, Bot } from "lucide-react";
+import { Home, BookOpen, FileText, ClipboardCheck, Brain, ClipboardList, TrendingUp, Bot } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
 
@@ -20,6 +20,7 @@ const menuItems = [
   { title: "学习资料", url: "/materials", icon: FileText },
   { title: "作业与评测", url: "/assignments", icon: ClipboardCheck },
   { title: "在线测验", url: "/quizzes", icon: Brain },
+  { title: "在线问卷", url: "/surveys", icon: ClipboardList },
   { title: "学习统计", url: "/statistics", icon: TrendingUp },
   { title: "AI 助教", url: "/ai-assistant", icon: Bot },
 ];
