@@ -313,19 +313,6 @@ const CourseDetail = () => {
 
   // 发布资料
   async function handlePublishMaterial() {
-    // 获取当前选择周次的标题和时间
-    const currentWeekTitle = currentWeekContent?.title || "";
-    const currentWeekDate = currentWeekContent?.date || "";
-    const res = await axios.post("/api/weekupdatetitle", {
-      course_week_id: "97",
-      course_id: courseId,
-      week_id: selectedWeek.toString(),
-      title: currentWeekTitle,
-      date: currentWeekDate
-    }, {
-      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
-    });
-
     if (!materialForm.name) {
       toast({
         title: "请填写资料名称",
