@@ -4,11 +4,15 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ClipboardCheck, Clock, CheckCircle2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import axios from "axios";
+import { describe } from "node:test";
+import { Description } from "@radix-ui/react-toast";
 
 const Assignments = () => {
   const navigate = useNavigate();
 
-  const pendingAssignments = [
+  const [pendingAssignments, setPendingAssignments] = useState([
     {
       title: "机器学习项目实现",
       course: "人工智能基础",
@@ -30,9 +34,9 @@ const Assignments = () => {
       status: "未开始",
       urgent: false,
     },
-  ];
+  ]);
 
-  const completedAssignments = [
+  const [completedAssignments, setCompletedAssignments] = useState([
     {
       title: "线性回归分析报告",
       course: "人工智能基础",
@@ -45,8 +49,57 @@ const Assignments = () => {
       submittedDate: "2024-01-08",
       score: "88",
     },
-  ];
+  ]);
 
+  async function fetchAssignments() {
+    let res = await axios.post("/api/getallhomework", {}, {
+      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+    })
+    console.log(res.data.assignments);
+    let fetchedAssignments = [];
+    let fetchedCompletedAssignments = [];
+    for (let i = 0; i < res.data.assignments.length; i++) {
+      let asg = res.data.assignments[i];
+      if (asg.score === "未完成") {
+        fetchedAssignments.push({
+          title: asg.name,
+          course: asg.course_name,
+          deadline: asg.deadline,
+          status: asg.status,
+          urgent: false,
+          fabu_time: asg.fabu_time,
+          huanjingyaoqiu: asg.huanjingyaoqiu1,
+          id: asg.id,
+          description: asg.description,
+          score: asg.score,
+          teacher_name: asg.teacher_name,
+          yaoqiu: asg.yaoqiu,
+        });
+      } else {
+        fetchedCompletedAssignments.push({
+          title: asg.name,
+          course: asg.course_name,
+          deadline: asg.deadline,
+          status: asg.status,
+          urgent: false,
+          fabu_time: asg.fabu_time,
+          huanjingyaoqiu: asg.huanjingyaoqiu1,
+          id: asg.id,
+          description: asg.description,
+          score: asg.score,
+          teacher_name: asg.teacher_name,
+          yaoqiu: asg.yaoqiu,
+          submittedDate:asg.submit_date
+        });
+      }
+
+    }
+    setPendingAssignments(fetchedAssignments);
+  }
+
+  useEffect(() => {
+    fetchAssignments();
+  }, []);
   return (
     <div className="space-y-6">
       <div>
@@ -62,17 +115,16 @@ const Assignments = () => {
 
         <TabsContent value="pending" className="space-y-4">
           {pendingAssignments.map((assignment, index) => (
-            <Card 
-              key={index} 
+            <Card
+              key={index}
               className="border-border/50 hover:shadow-md transition-all duration-200 cursor-pointer"
               onClick={() => navigate(`/assignments/${index + 1}`)}
             >
               <CardHeader>
                 <div className="flex items-start justify-between">
                   <div className="flex items-start gap-4 flex-1">
-                    <div className={`w-12 h-12 rounded-lg bg-gradient-to-br ${
-                      assignment.urgent ? 'from-red-500 to-orange-500' : 'from-primary to-accent'
-                    } flex items-center justify-center flex-shrink-0`}>
+                    <div className={`w-12 h-12 rounded-lg bg-gradient-to-br ${assignment.urgent ? 'from-red-500 to-orange-500' : 'from-primary to-accent'
+                      } flex items-center justify-center flex-shrink-0`}>
                       <ClipboardCheck className="w-6 h-6 text-white" />
                     </div>
                     <div className="flex-1">
@@ -96,7 +148,7 @@ const Assignments = () => {
               </CardHeader>
               <CardContent>
                 <div className="flex gap-2">
-                  <Button 
+                  <Button
                     className="flex-1 bg-gradient-to-r from-primary to-accent hover:opacity-90"
                     onClick={(e) => {
                       e.stopPropagation();
@@ -105,7 +157,7 @@ const Assignments = () => {
                   >
                     开始作业
                   </Button>
-                  <Button 
+                  <Button
                     variant="outline"
                     onClick={(e) => {
                       e.stopPropagation();
@@ -122,8 +174,8 @@ const Assignments = () => {
 
         <TabsContent value="completed" className="space-y-4">
           {completedAssignments.map((assignment, index) => (
-            <Card 
-              key={index} 
+            <Card
+              key={index}
               className="border-border/50 hover:shadow-md transition-all duration-200 cursor-pointer"
               onClick={() => navigate(`/assignments/${pendingAssignments.length + index + 1}`)}
             >
@@ -149,8 +201,8 @@ const Assignments = () => {
                 </div>
               </CardHeader>
               <CardContent>
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   className="w-full"
                   onClick={(e) => {
                     e.stopPropagation();
