@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -23,7 +23,9 @@ import {
 } from "lucide-react";
 
 const AssignmentDetail = () => {
-  const { assignmentId } = useParams();
+  const { assignmentId, state } = useParams();
+  const location = useLocation();
+  const myassignment = location.state;
   const navigate = useNavigate();
   const { toast } = useToast();
   const [submission, setSubmission] = useState("");
@@ -40,30 +42,16 @@ const AssignmentDetail = () => {
   // 模拟作业详情数据
   const [assignment, setAssignment] = useState({
     id: assignmentId,
-    name: "机器学习项目实现",
-    course: "人工智能基础",
-    instructor: "张教授",
-    deadline: "2024-01-20",
-    publishDate: "2024-01-10",
+    name: myassignment.title,
+    course: myassignment.course,
+    instructor: myassignment.teacher_name || "未知教师",
+    deadline: myassignment.deadline,
+    publishDate: myassignment.fabu_time || "未知日期",
     status: "进行中", // 进行中、已完成、已逾期
-    score: null,
-    maxScore: 100,
-    description: `请完成以下任务：
-
-1. 使用Python实现一个简单的线性回归模型
-2. 在提供的数据集上训练模型
-3. 评估模型性能并生成可视化图表
-4. 撰写实验报告（不少于1000字）
-
-要求：
-- 代码需要有完整的注释
-- 实验报告需要包含：问题描述、方法介绍、实验结果、结论分析
-- 提交格式：压缩包（包含代码和报告）`,
-    requirements: [
-      "Python 3.8+",
-      "NumPy, Pandas, Matplotlib",
-      "Jupyter Notebook",
-    ],
+    score: myassignment.score || null,
+    maxScore: myassignment.max_score || 100,
+    description: myassignment.description || "暂无描述",
+    requirements: myassignment.yaoqiu || ["请按时完成作业", "确保代码可运行"],
     submittedCount: 85,
     totalStudents: 120,
     submissions: [

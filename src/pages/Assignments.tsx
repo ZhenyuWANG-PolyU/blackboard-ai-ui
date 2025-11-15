@@ -8,6 +8,7 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { describe } from "node:test";
 import { Description } from "@radix-ui/react-toast";
+import { set } from "date-fns";
 
 const Assignments = () => {
   const navigate = useNavigate();
@@ -19,6 +20,7 @@ const Assignments = () => {
       deadline: "2024-01-20",
       status: "进行中",
       urgent: true,
+      id:"0"
     },
     {
       title: "数据结构算法题集",
@@ -26,6 +28,7 @@ const Assignments = () => {
       deadline: "2024-01-22",
       status: "未开始",
       urgent: false,
+      id:"1"
     },
     {
       title: "Python编程作业",
@@ -33,6 +36,7 @@ const Assignments = () => {
       deadline: "2024-01-25",
       status: "未开始",
       urgent: false,
+      id:"2"
     },
   ]);
 
@@ -42,12 +46,14 @@ const Assignments = () => {
       course: "人工智能基础",
       submittedDate: "2024-01-10",
       score: "95",
+      id:"0"
     },
     {
       title: "排序算法实现",
       course: "算法设计",
       submittedDate: "2024-01-08",
       score: "88",
+      id:"1"
     },
   ]);
 
@@ -94,6 +100,7 @@ const Assignments = () => {
       }
 
     }
+    setCompletedAssignments(fetchedCompletedAssignments);
     setPendingAssignments(fetchedAssignments);
   }
 
@@ -118,7 +125,7 @@ const Assignments = () => {
             <Card
               key={index}
               className="border-border/50 hover:shadow-md transition-all duration-200 cursor-pointer"
-              onClick={() => navigate(`/assignments/${index + 1}`)}
+              onClick={() => navigate(`/assignments/${assignment.id}`, { state: assignment })}
             >
               <CardHeader>
                 <div className="flex items-start justify-between">
@@ -152,7 +159,7 @@ const Assignments = () => {
                     className="flex-1 bg-gradient-to-r from-primary to-accent hover:opacity-90"
                     onClick={(e) => {
                       e.stopPropagation();
-                      navigate(`/assignments/${index + 1}`);
+                      navigate(`/assignments/${assignment.id}`, { state: assignment });
                     }}
                   >
                     开始作业
@@ -161,7 +168,7 @@ const Assignments = () => {
                     variant="outline"
                     onClick={(e) => {
                       e.stopPropagation();
-                      navigate(`/assignments/${index + 1}`);
+                      navigate(`/assignments/${assignment.id}`, { state: assignment });
                     }}
                   >
                     查看详情
@@ -177,7 +184,7 @@ const Assignments = () => {
             <Card
               key={index}
               className="border-border/50 hover:shadow-md transition-all duration-200 cursor-pointer"
-              onClick={() => navigate(`/assignments/${pendingAssignments.length + index + 1}`)}
+              onClick={() => navigate(`/assignments/${assignment.id}`, { state: assignment })}
             >
               <CardHeader>
                 <div className="flex items-start justify-between">
@@ -206,7 +213,7 @@ const Assignments = () => {
                   className="w-full"
                   onClick={(e) => {
                     e.stopPropagation();
-                    navigate(`/assignments/${pendingAssignments.length + index + 1}`);
+                    navigate(`/assignments/${assignment.id}`, { state: assignment });
                   }}
                 >
                   查看评测详情
