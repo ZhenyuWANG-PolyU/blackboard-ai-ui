@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -313,6 +313,19 @@ const CourseDetail = () => {
 
   // 发布资料
   async function handlePublishMaterial() {
+    // 如果发布文件所在周次的标题和时间在数据库里为空，则先建立
+    const currentWeekTitle = currentWeekContent?.title || "";
+    const currentWeekDate = currentWeekContent?.date || "";
+    const res = await axios.post("/api/weekupdatetitle", {
+      course_week_id: "97",
+      course_id: courseId,
+      week_id: selectedWeek.toString(),
+      title: currentWeekTitle,
+      date: currentWeekDate
+    }, {
+      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+    });
+
     if (!materialForm.name) {
       toast({
         title: "请填写资料名称",
@@ -333,13 +346,13 @@ const CourseDetail = () => {
       // 获取原始文件的扩展名
       const originalFileName = materialForm.file.name;
       const fileExtension = originalFileName.substring(originalFileName.lastIndexOf('.'));
-      
+
       // 确保文件名包含扩展名
       let fullFileName = materialForm.name;
       if (!fullFileName.includes('.')) {
         fullFileName = fullFileName + fileExtension;
       }
-      
+
       // 第一步：获取上传URL
       const res = await axios.post("/api/file_upload", {
         file_name: fullFileName,
@@ -370,7 +383,13 @@ const CourseDetail = () => {
             name: file_name,
             type: file_type,
             size: file_size,
-            completed: "true"
+            completed: "true",
+            update_time: new Date().toISOString(),
+            course_name: course.title,
+            course_teacher: course.instructor,
+            look_times: "0",
+            download_times: "0",
+            score: "10",
           }
         ]
       }, {
@@ -407,6 +426,7 @@ const CourseDetail = () => {
       });
       return;
     }
+
 
     toast({
       title: "作业发布成功",
@@ -522,9 +542,9 @@ const CourseDetail = () => {
     }, {
       headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
     });
-    
+
     const downloadurl = res.data.file_download_url;
-    
+
     // 在新标签页中打开下载链接
     window.open(downloadurl, '_blank');
   };
