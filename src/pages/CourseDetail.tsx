@@ -28,6 +28,7 @@ import {
   X
 } from "lucide-react";
 import axios from "axios";
+import { timeStamp } from "console";
 
 const CourseDetail = () => {
   const { courseId } = useParams();
@@ -417,7 +418,20 @@ const CourseDetail = () => {
   };
 
   // 发布作业
-  const handlePublishAssignment = () => {
+  async function handlePublishAssignment() {
+    // 如果发布作业所在周次的标题和时间在数据库里为空，则先建立
+    const currentWeekTitle = currentWeekContent?.title || "";
+    const currentWeekDate = currentWeekContent?.date || "";
+    const res = await axios.post("/api/weekupdatetitle", {
+      course_week_id: courseId + selectedWeek.toString(),
+      course_id: courseId,
+      week_id: selectedWeek.toString(),
+      title: currentWeekTitle,
+      date: currentWeekDate
+    }, {
+      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+    });
+
     if (!assignmentForm.name || !assignmentForm.deadline) {
       toast({
         title: "请填写完整信息",
@@ -426,8 +440,27 @@ const CourseDetail = () => {
       });
       return;
     }
-
-
+    let thisass = {
+      id: (new Date()).valueOf().toString(),
+      name: assignmentForm.name.toString(),
+      fabu_time: new Date().toISOString(),
+      deadline: assignmentForm.deadline.toString(),
+      status: "未完成",
+      score: "未完成",
+      description: assignmentForm.description.toString(),
+      course_name: course.title,
+      teacher_name: course.instructor,
+      yaoqiu: "",
+      huanjingyaoqiu: "",
+    }
+    const res2 = await axios.post("/api/updatehomework", {
+      course_week_id: courseId + selectedWeek.toString(),
+      assignments: [thisass]
+    }, {
+      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+    })
+    console.log(res2.data);
+    await getWeekDetail();
     toast({
       title: "作业发布成功",
       description: `${assignmentForm.name} 已发布到第 ${selectedWeek} 周`,
@@ -438,7 +471,19 @@ const CourseDetail = () => {
   };
 
   // 发布测验
-  const handlePublishQuiz = () => {
+  async function handlePublishQuiz() {
+    // 如果发布作业所在周次的标题和时间在数据库里为空，则先建立
+    const currentWeekTitle = currentWeekContent?.title || "";
+    const currentWeekDate = currentWeekContent?.date || "";
+    const res = await axios.post("/api/weekupdatetitle", {
+      course_week_id: courseId + selectedWeek.toString(),
+      course_id: courseId,
+      week_id: selectedWeek.toString(),
+      title: currentWeekTitle,
+      date: currentWeekDate
+    }, {
+      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+    });
     if (!quizForm.name || !quizForm.questions || !quizForm.time) {
       toast({
         title: "请填写完整信息",
@@ -446,6 +491,23 @@ const CourseDetail = () => {
       });
       return;
     }
+
+    let thisquiz = {
+      id: (new Date()).valueOf().toString(),
+      name: quizForm.name.toString(),
+      questions_number: quizForm.questions.toString(),
+      time: quizForm.time.toString(),
+      status: "未完成",
+      score: "未完成",
+    }
+    const res2 = await axios.post("/api/updatequizzes", {
+      course_week_id: courseId + selectedWeek.toString(),
+      quizzes: [thisquiz]
+    }, {
+      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+    });
+    console.log(res2.data);
+    await getWeekDetail();
 
     toast({
       title: "测验发布成功",
@@ -457,7 +519,19 @@ const CourseDetail = () => {
   };
 
   // 发布问卷
-  const handlePublishSurvey = () => {
+  async function handlePublishSurvey() {
+    // 如果发布作业所在周次的标题和时间在数据库里为空，则先建立
+    const currentWeekTitle = currentWeekContent?.title || "";
+    const currentWeekDate = currentWeekContent?.date || "";
+    const res = await axios.post("/api/weekupdatetitle", {
+      course_week_id: courseId + selectedWeek.toString(),
+      course_id: courseId,
+      week_id: selectedWeek.toString(),
+      title: currentWeekTitle,
+      date: currentWeekDate
+    }, {
+      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+    });
     if (!surveyForm.name) {
       toast({
         title: "请填写问卷名称",
@@ -465,6 +539,20 @@ const CourseDetail = () => {
       });
       return;
     }
+
+    let thissurvey = {
+      id: (new Date()).valueOf().toString(),
+      name: surveyForm.name.toString(),
+      status: "未完成",
+    }
+    const res2 = await axios.post("/api/updatesurveys", {
+      course_week_id: courseId + selectedWeek.toString(),
+      surveys: [thissurvey]
+    }, {
+      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+    });
+    console.log(res2.data);
+    await getWeekDetail();
 
     toast({
       title: "问卷发布成功",
