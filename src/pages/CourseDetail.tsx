@@ -22,7 +22,10 @@ import {
   Clock,
   Calendar,
   Plus,
-  Upload
+  Upload,
+  Edit2,
+  Save,
+  X
 } from "lucide-react";
 import axios from "axios";
 
@@ -265,8 +268,14 @@ const CourseDetail = () => {
     },
   ];
 
+  const [weeklyContentState, setWeeklyContentState] = useState(weeklyContent);
   const [selectedWeek, setSelectedWeek] = useState(1);
-  const currentWeekContent = weeklyContent.find(w => w.week === selectedWeek);
+  const [isEditingWeek, setIsEditingWeek] = useState(false);
+  const [editWeekForm, setEditWeekForm] = useState({
+    title: "",
+    date: "",
+  });
+  const currentWeekContent = weeklyContentState.find(w => w.week === selectedWeek);
 
   // 发布资料
   const handlePublishMaterial = () => {
@@ -343,6 +352,57 @@ const CourseDetail = () => {
 
     setSurveyForm({ name: "", description: "" });
     setIsSurveyDialogOpen(false);
+  };
+
+  // 开始编辑周次信息
+  const handleStartEditWeek = () => {
+    if (currentWeekContent) {
+      setEditWeekForm({
+        title: currentWeekContent.title,
+        date: currentWeekContent.date,
+      });
+      setIsEditingWeek(true);
+    }
+  };
+
+  // 保存周次信息
+  const handleSaveWeek = () => {
+    if (!editWeekForm.title.trim()) {
+      toast({
+        title: "请填写周次标题",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!editWeekForm.date.trim()) {
+      toast({
+        title: "请选择日期",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setWeeklyContentState(prev => 
+      prev.map(week => 
+        week.week === selectedWeek
+          ? { ...week, title: editWeekForm.title, date: editWeekForm.date }
+          : week
+      )
+    );
+
+    toast({
+      title: "保存成功",
+      description: `第 ${selectedWeek} 周信息已更新`,
+    });
+
+    setIsEditingWeek(false);
+  };
+
+  // 取消编辑
+  const handleCancelEdit = () => {
+    setIsEditingWeek(false);
+    setEditWeekForm({ title: "", date: "" });
   };
 
   const getStatusColor = (status: string) => {
@@ -439,16 +499,77 @@ const CourseDetail = () => {
         <Card className="border-border/50">
           <CardHeader>
             <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="text-2xl">第 {currentWeekContent.week} 周：{currentWeekContent.title}</CardTitle>
-                <CardDescription className="flex items-center gap-2 mt-2">
-                  <Calendar className="w-4 h-4" />
-                  {currentWeekContent.date}
-                </CardDescription>
+              <div className="flex-1">
+                {isEditingWeek ? (
+                  <div className="space-y-3">
+                    <div>
+                      <Label htmlFor="week-title" className="text-sm text-muted-foreground mb-1">周次标题</Label>
+                      <Input
+                        id="week-title"
+                        value={editWeekForm.title}
+                        onChange={(e) => setEditWeekForm(prev => ({ ...prev, title: e.target.value }))}
+                        placeholder="输入周次标题"
+                        className="text-xl font-semibold"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="week-date" className="text-sm text-muted-foreground mb-1">日期</Label>
+                      <Input
+                        id="week-date"
+                        type="date"
+                        value={editWeekForm.date}
+                        onChange={(e) => setEditWeekForm(prev => ({ ...prev, date: e.target.value }))}
+                        className="w-auto"
+                      />
+                    </div>
+                    <div className="flex gap-2 mt-3">
+                      <Button
+                        size="sm"
+                        onClick={handleSaveWeek}
+                        className="gap-2"
+                      >
+                        <Save className="w-4 h-4" />
+                        保存
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={handleCancelEdit}
+                        className="gap-2"
+                      >
+                        <X className="w-4 h-4" />
+                        取消
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <CardTitle className="text-2xl">第 {currentWeekContent.week} 周：{currentWeekContent.title}</CardTitle>
+                    <CardDescription className="flex items-center gap-2 mt-2">
+                      <Calendar className="w-4 h-4" />
+                      {currentWeekContent.date}
+                    </CardDescription>
+                  </>
+                )}
               </div>
-              <Badge variant="secondary" className="text-lg px-4 py-2">
-                第 {currentWeekContent.week} 周
-              </Badge>
+              {!isEditingWeek && (
+                <div className="flex items-center gap-2">
+                  {isTeacher && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={handleStartEditWeek}
+                      className="gap-2"
+                    >
+                      <Edit2 className="w-4 h-4" />
+                      编辑
+                    </Button>
+                  )}
+                  <Badge variant="secondary" className="text-lg px-4 py-2">
+                    第 {currentWeekContent.week} 周
+                  </Badge>
+                </div>
+              )}
             </div>
           </CardHeader>
           <CardContent>
