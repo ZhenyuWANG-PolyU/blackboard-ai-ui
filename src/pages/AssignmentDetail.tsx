@@ -7,6 +7,15 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import {
   ArrowLeft,
   ClipboardCheck,
   Clock,
@@ -34,6 +43,14 @@ const AssignmentDetail = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isEditing, setIsEditing] = useState(false);
+  
+  // 批改相关状态
+  const [isGradingOpen, setIsGradingOpen] = useState(false);
+  const [currentGradingSubmission, setCurrentGradingSubmission] = useState<any>(null);
+  const [gradingScore, setGradingScore] = useState("");
+  const [gradingFeedback, setGradingFeedback] = useState("");
+  const [gradingFile, setGradingFile] = useState<File | null>(null);
+  const gradingFileInputRef = useRef<HTMLInputElement>(null);
   const [editedAssignment, setEditedAssignment] = useState({
     name: "",
     description: "",
@@ -251,6 +268,99 @@ const AssignmentDetail = () => {
     setEditedAssignment({ ...editedAssignment, requirements: newRequirements });
   };
 
+  // 批改相关函数
+  const handleOpenGrading = (sub: any) => {
+    setCurrentGradingSubmission(sub);
+    setGradingScore(sub.score === "待批改" ? "" : sub.score.toString());
+    setGradingFeedback(sub.feedback === "待批改" ? "" : sub.feedback);
+    setGradingFile(null);
+    setIsGradingOpen(true);
+  };
+
+  const handleGradingFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      if (file.size > 20 * 1024 * 1024) {
+        toast({
+          title: "文件过大",
+          description: "文件大小不能超过 20MB",
+          variant: "destructive",
+        });
+        return;
+      }
+      setGradingFile(file);
+      toast({
+        title: "文件已选择",
+        description: file.name,
+      });
+    }
+  };
+
+  const handleGradingUploadClick = () => {
+    gradingFileInputRef.current?.click();
+  };
+
+  const handleSubmitGrading = async () => {
+    if (!gradingScore || !gradingFeedback) {
+      toast({
+        title: "请填写完整信息",
+        description: "请输入分数和反馈",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      let fileUrl = currentGradingSubmission.file_url;
+      
+      // 如果上传了新文件，先上传文件
+      if (gradingFile) {
+        const uploadRes = await axios.post("/api/file_upload", {
+          file_name: gradingFile.name,
+          class_id: "",
+          user_id: currentGradingSubmission.user_id,
+          description: "批改文件"
+        }, {
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        });
+        
+        await axios.put(uploadRes.data.file_upload_url, gradingFile);
+        fileUrl = uploadRes.data.file_name;
+      }
+
+      // 提交批改
+      await axios.post("/api/grade_homework", {
+        uuid: currentGradingSubmission.uuid,
+        score: gradingScore,
+        feedback: gradingFeedback,
+        file_url: fileUrl
+      }, {
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+      });
+
+      toast({
+        title: "批改成功",
+        description: "作业批改已提交",
+      });
+
+      // 刷新提交列表
+      await getAssignSubmit();
+      
+      // 关闭对话框
+      setIsGradingOpen(false);
+      setCurrentGradingSubmission(null);
+      setGradingScore("");
+      setGradingFeedback("");
+      setGradingFile(null);
+    } catch (error) {
+      toast({
+        title: "批改失败",
+        description: "请稍后重试",
+        variant: "destructive",
+      });
+    }
+  };
+
   const isOverdue = new Date(assignment.deadline) < new Date();
   const daysLeft = Math.ceil((new Date(assignment.deadline).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
 
@@ -466,10 +576,19 @@ const AssignmentDetail = () => {
                       <span className="text-lg font-bold text-green-600">{sub.score}</span>
                       <span className="text-sm text-muted-foreground">/ {assignment.maxScore}</span>
                     </div>
-                    <div className="text-sm text-muted-foreground">
+                    <div className="text-sm text-muted-foreground mb-3">
                       <span className="font-medium">反馈: </span>
                       {sub.feedback}
                     </div>
+                    <Button
+                      onClick={() => handleOpenGrading(sub)}
+                      variant="outline"
+                      size="sm"
+                      className="w-full"
+                    >
+                      <Edit className="w-4 h-4 mr-2" />
+                      批改作业
+                    </Button>
                   </div>
                 ))}
               </CardContent>
@@ -598,6 +717,84 @@ const AssignmentDetail = () => {
           </Card>
         </div>
       </div>
+
+      {/* 批改对话框 */}
+      <Dialog open={isGradingOpen} onOpenChange={setIsGradingOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>批改作业</DialogTitle>
+            <DialogDescription>
+              为学生的作业打分并提供反馈
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="score">分数</Label>
+              <Input
+                id="score"
+                type="number"
+                placeholder={`请输入分数 (0-${assignment.maxScore})`}
+                value={gradingScore}
+                onChange={(e) => setGradingScore(e.target.value)}
+                min="0"
+                max={assignment.maxScore}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="feedback">反馈</Label>
+              <Textarea
+                id="feedback"
+                placeholder="请输入对学生作业的反馈..."
+                value={gradingFeedback}
+                onChange={(e) => setGradingFeedback(e.target.value)}
+                className="min-h-[100px]"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>上传批改文件（可选）</Label>
+              <input
+                type="file"
+                ref={gradingFileInputRef}
+                onChange={handleGradingFileSelect}
+                accept=".zip,.pdf,.docx,.doc,.txt,.ppt,.pptx"
+                className="hidden"
+              />
+              <div
+                onClick={handleGradingUploadClick}
+                className="border-2 border-dashed border-border rounded-lg p-6 text-center hover:border-primary/50 transition-colors cursor-pointer"
+              >
+                {gradingFile ? (
+                  <div className="space-y-2">
+                    <CheckCircle2 className="w-8 h-8 text-green-600 mx-auto" />
+                    <p className="text-sm font-medium">{gradingFile.name}</p>
+                    <p className="text-xs text-muted-foreground">
+                      ({(gradingFile.size / 1024 / 1024).toFixed(2)} MB)
+                    </p>
+                  </div>
+                ) : (
+                  <>
+                    <Upload className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
+                    <p className="text-sm text-muted-foreground">
+                      点击上传批改文件
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      支持 ZIP, PDF, DOCX, TXT, PPT 格式，最大 20MB
+                    </p>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsGradingOpen(false)}>
+              取消
+            </Button>
+            <Button onClick={handleSubmitGrading}>
+              提交批改
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
