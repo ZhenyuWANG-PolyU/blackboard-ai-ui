@@ -13,6 +13,8 @@ import Materials from "./pages/Materials";
 import MaterialDetail from "./pages/MaterialDetail";
 import Assignments from "./pages/Assignments";
 import AssignmentDetail from "./pages/AssignmentDetail";
+import Quizzes from "./pages/Quizzes";
+import QuizDetail from "./pages/QuizDetail";
 import Statistics from "./pages/Statistics";
 import AIAssistant from "./pages/AIAssistant";
 import Profile from "./pages/Profile";
@@ -38,6 +40,8 @@ const App = () => (
             <Route path="/materials/:materialId" element={<MaterialDetail />} />
             <Route path="/assignments" element={<Assignments />} />
             <Route path="/assignments/:assignmentId" element={<AssignmentDetail />} />
+            <Route path="/quizzes" element={<Quizzes />} />
+            <Route path="/quizzes/:quizId" element={<QuizDetail />} />
             <Route path="/statistics" element={<Statistics />} />
             <Route path="/ai-assistant" element={<AIAssistant />} />
             <Route path="/profile" element={<Profile />} />
