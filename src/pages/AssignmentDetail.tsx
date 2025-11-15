@@ -837,7 +837,7 @@ const AssignmentDetail = () => {
               取消
             </Button>
             <Button onClick={handleSubmitGrading}>
-              提交批改
+              AI批改
             </Button>
             <Button onClick={decisionSubmitGrading}>
               确认批改

@@ -3,11 +3,27 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Calendar, FileText, User, Award, MessageSquare, Download } from "lucide-react";
+import { useEffect, useState } from "react";
+import axios from "axios";
 
 const GradingDetail = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const submissionData = location.state;
+  const [downloadurl, setDownloadurl] = useState("");
+
+  async function getFile() {
+    let res = await axios.post("/api/file_download",{
+      file_name:submissionData.file_url
+    },{
+      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+    })
+    console.log(res.data.file_download_url);
+    setDownloadurl(res.data.file_download_url);
+  }
+  useEffect(() => {
+    getFile();
+  }, []);
 
   if (!submissionData) {
     return (
@@ -65,7 +81,7 @@ const GradingDetail = () => {
                 <div className="flex items-center gap-2">
                   <Download className="h-4 w-4 text-muted-foreground" />
                   <a 
-                    href={submissionData.file_url} 
+                    href={downloadurl} 
                     target="_blank" 
                     rel="noopener noreferrer"
                     className="text-primary hover:underline"
@@ -119,7 +135,7 @@ const GradingDetail = () => {
         {submissionData.assign_description && (
           <Card>
             <CardHeader>
-              <CardTitle>作业要求</CardTitle>
+              <CardTitle>作业简介</CardTitle>
             </CardHeader>
             <CardContent>
               <p className="whitespace-pre-wrap text-muted-foreground">
