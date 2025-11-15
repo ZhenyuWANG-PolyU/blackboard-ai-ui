@@ -1,68 +1,67 @@
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { 
-  ArrowLeft, 
-  FileText, 
-  Download, 
+import {
+  ArrowLeft,
+  FileText,
+  Download,
   Eye,
   Share2,
   Calendar,
   User,
   BookOpen
 } from "lucide-react";
+import { useEffect, useState } from "react";
+import axios from "axios";
+import ReactMarkdown from 'react-markdown';
 
 const MaterialDetail = () => {
-  const { materialId } = useParams();
+  const { materialTitle } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
+  const mymaterial = location.state;
 
   // 模拟资料详情数据
-  const material = {
-    id: materialId,
-    name: "机器学习导论.pdf",
-    course: "人工智能基础",
-    instructor: "张教授",
-    type: "PDF",
-    size: "2.3 MB",
-    uploadDate: "2024-01-15",
-    description: "本资料详细介绍了机器学习的基本概念、核心算法和实际应用。包括监督学习、非监督学习和强化学习三大类别，以及常用的算法如线性回归、决策树、神经网络等。",
-    content: `
-# 机器学习导论
-
-## 第一章：机器学习概述
-
-### 1.1 什么是机器学习
-机器学习是人工智能的一个分支，它使计算机能够从数据中学习并做出决策或预测，而无需明确编程。
-
-### 1.2 机器学习的类型
-1. **监督学习**：从标记的训练数据中学习
-2. **非监督学习**：从未标记的数据中发现模式
-3. **强化学习**：通过与环境交互来学习
-
-### 1.3 机器学习的应用
-- 图像识别
-- 自然语言处理
-- 推荐系统
-- 预测分析
-
-## 第二章：线性回归
-
-### 2.1 基本概念
-线性回归是一种用于建模因变量和一个或多个自变量之间线性关系的统计方法。
-
-### 2.2 数学模型
-y = β₀ + β₁x₁ + β₂x₂ + ... + βₙxₙ + ε
-
-### 2.3 实现步骤
-1. 数据收集与预处理
-2. 模型训练
-3. 参数估计
-4. 模型评估
-    `,
-    downloads: 156,
-    views: 523,
-  };
+  const [material, setMaterial] = useState({
+    id: mymaterial?.id || 1,
+    name: mymaterial?.title || "unknown",
+    course: mymaterial?.course || "unknown",
+    instructor: mymaterial?.course_teacher || "unknown",
+    type: mymaterial?.type || "unknown",
+    size: mymaterial?.size || "unknown",
+    uploadDate: mymaterial?.date || "unknown",
+    description: "AI总结中...",
+    content: "AI预览中...",
+    downloads: mymaterial?.download_times || 0,
+    views: mymaterial?.look_times || 0,
+    score: mymaterial?.score || 0,
+  });
+  async function getDescription() {
+    let res = await axios.post("/api/zongjie_file", {
+      url: material.id
+    });
+    // console.log(res.data.response);
+    setMaterial(prevMaterial => ({
+      ...prevMaterial,
+      description: res.data.response
+    }));
+  }
+  async function getContent() {
+    let res = await axios.post("/api/yulan_file", {
+      url: material.id
+    });
+    console.log(res.data.response);
+    setMaterial(prevMaterial => ({
+      ...prevMaterial,
+      content: res.data.response
+    }));
+  }
+  useEffect(() => {
+    getDescription();
+    getContent();
+    // console.log(material)
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -139,7 +138,7 @@ y = β₀ + β₁x₁ + β₂x₂ + ... + βₙxₙ + ε
               <div className="text-sm text-muted-foreground">下载次数</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-primary">4.8</div>
+              <div className="text-2xl font-bold text-primary">{material.score}</div>
               <div className="text-sm text-muted-foreground">评分</div>
             </div>
           </div>
@@ -152,7 +151,9 @@ y = β₀ + β₁x₁ + β₂x₂ + ... + βₙxₙ + ε
           <CardTitle>资料描述</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-muted-foreground leading-relaxed">{material.description}</p>
+          <div className="prose prose-sm max-w-none dark:prose-invert text-muted-foreground">
+            <ReactMarkdown>{material.description}</ReactMarkdown>
+          </div>
         </CardContent>
       </Card>
 
@@ -165,7 +166,7 @@ y = β₀ + β₁x₁ + β₂x₂ + ... + βₙxₙ + ε
         <CardContent>
           <div className="prose prose-sm max-w-none">
             <pre className="whitespace-pre-wrap bg-secondary/30 p-6 rounded-lg text-sm text-foreground leading-relaxed">
-              {material.content}
+              <ReactMarkdown>{material.content}</ReactMarkdown>
             </pre>
           </div>
         </CardContent>
