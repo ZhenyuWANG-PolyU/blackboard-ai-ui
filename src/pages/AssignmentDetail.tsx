@@ -32,6 +32,7 @@ import {
 } from "lucide-react";
 import axios from "axios";
 import { get } from "http";
+import { set } from "date-fns";
 
 const AssignmentDetail = () => {
   const { assignmentId, state } = useParams();
@@ -43,7 +44,7 @@ const AssignmentDetail = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isEditing, setIsEditing] = useState(false);
-  
+
   // 批改相关状态
   const [isGradingOpen, setIsGradingOpen] = useState(false);
   const [currentGradingSubmission, setCurrentGradingSubmission] = useState<any>(null);
@@ -82,6 +83,7 @@ const AssignmentDetail = () => {
         file: "张三_作业.zip",
         score: 95,
         feedback: "代码实现优秀，报告分析深入，建议在可视化部分增加更多图表。",
+        file_url: "",
       },
     ],
   });
@@ -301,42 +303,49 @@ const AssignmentDetail = () => {
   };
 
   const handleSubmitGrading = async () => {
-    if (!gradingScore || !gradingFeedback) {
-      toast({
-        title: "请填写完整信息",
-        description: "请输入分数和反馈",
-        variant: "destructive",
-      });
-      return;
-    }
+    // if (!gradingScore || !gradingFeedback) {
+    //   toast({
+    //     title: "请填写完整信息",
+    //     description: "请输入分数和反馈",
+    //     variant: "destructive",
+    //   });
+    //   return;
+    // }
 
     try {
-      let fileUrl = currentGradingSubmission.file_url;
-      
+      let url1 = "";
+      let url2 = currentGradingSubmission.file_url;
       // 如果上传了新文件，先上传文件
       if (gradingFile) {
         const uploadRes = await axios.post("/api/file_upload", {
           file_name: gradingFile.name,
           class_id: "",
-          user_id: currentGradingSubmission.user_id,
+          user_id: "",
           description: "批改文件"
         }, {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         });
-        
+
         await axios.put(uploadRes.data.file_upload_url, gradingFile);
-        fileUrl = uploadRes.data.file_name;
+        url1 = uploadRes.data.file_name;
       }
 
+      console.log(url1);
+      console.log(url2);
       // 提交批改
-      await axios.post("/api/grade_homework", {
-        uuid: currentGradingSubmission.uuid,
-        score: gradingScore,
-        feedback: gradingFeedback,
-        file_url: fileUrl
+      toast({
+        title: "批改中....",
+        description: "作业批改已提交",
+      });
+      let res3 = await axios.post("/api/grade_assignment", {
+        url1: url1,
+        url2: url2
       }, {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
       });
+      console.log(res3.data);
+      setGradingScore(res3.data.score);
+      setGradingFeedback(res3.data.feedback);
 
       toast({
         title: "批改成功",
@@ -345,13 +354,13 @@ const AssignmentDetail = () => {
 
       // 刷新提交列表
       await getAssignSubmit();
-      
+
       // 关闭对话框
-      setIsGradingOpen(false);
-      setCurrentGradingSubmission(null);
-      setGradingScore("");
-      setGradingFeedback("");
-      setGradingFile(null);
+      // setIsGradingOpen(false);
+      // setCurrentGradingSubmission(null);
+      // setGradingScore("");
+      // setGradingFeedback("");
+      // setGradingFile(null);
     } catch (error) {
       toast({
         title: "批改失败",
@@ -360,6 +369,23 @@ const AssignmentDetail = () => {
       });
     }
   };
+
+  async function decisionSubmitGrading() {
+    let res = await axios.post("/api/update_submit_by_uuid", {
+      uuid: currentGradingSubmission.uuid,
+      score: gradingScore.toString(),
+      feedback: gradingFeedback.toString()
+    },{
+      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+    })
+    await getAssignSubmit();
+    // 关闭对话框
+    setIsGradingOpen(false);
+    setCurrentGradingSubmission(null);
+    setGradingScore("");
+    setGradingFeedback("");
+    setGradingFile(null);
+  }
 
   const isOverdue = new Date(assignment.deadline) < new Date();
   const daysLeft = Math.ceil((new Date(assignment.deadline).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
@@ -791,6 +817,9 @@ const AssignmentDetail = () => {
             </Button>
             <Button onClick={handleSubmitGrading}>
               提交批改
+            </Button>
+            <Button onClick={decisionSubmitGrading}>
+              确认批改
             </Button>
           </DialogFooter>
         </DialogContent>
