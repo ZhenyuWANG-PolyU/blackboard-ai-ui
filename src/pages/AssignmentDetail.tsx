@@ -50,7 +50,7 @@ const AssignmentDetail = () => {
     publishDate: myassignment.fabu_time || "未知日期",
     status: "进行中", // 进行中、已完成、已逾期
     score: myassignment.score || null,
-    maxScore: myassignment.max_score || 100,
+    maxScore: myassignment.maxscore || 100,
     description: myassignment.description || "暂无描述",
     requirements: myassignment.yaoqiu || ["请按时完成作业", "确保代码可运行"],
     submittedCount: 85,
@@ -110,17 +110,17 @@ const AssignmentDetail = () => {
   async function handleSave() {
     let ass = {
       id: assignment.id,
-      name: assignment.name,
+      name: editedAssignment.name,
       score: assignment.score,
       status: assignment.status,
-      yaoqiu: assignment.requirements,
-      deadline: assignment.deadline,
-      fabu_time: assignment.publishDate,
+      yaoqiu: editedAssignment.requirements,
+      deadline: editedAssignment.deadline,
+      fabu_time: editedAssignment.publishDate,
       course_name: assignment.course,
-      description: assignment.description,
+      description: editedAssignment.description,
       teacher_name: assignment.instructor,
       huanjingyaoqiu: "",
-      maxscore: assignment.maxScore
+      maxscore: editedAssignment.maxScore
     }
     console.log(ass);
     const res = await axios.post("/api/updateassignment", {
