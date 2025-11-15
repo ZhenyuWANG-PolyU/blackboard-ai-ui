@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -17,6 +17,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
 import { BookOpen, Clock, Users, Plus, BookmarkPlus, MoreVertical, Trash2, Star } from "lucide-react";
 import axios from "axios";
+import { set } from "date-fns";
 
 const Courses = () => {
   const navigate = useNavigate();
@@ -26,78 +27,88 @@ const Courses = () => {
 
   // 我的课程
   const [myCourses, setMyCourses] = useState([
-    {
-      id: 1,
-      title: "人工智能基础",
-      instructor: "张教授",
-      progress: 75,
-      students: 120,
-      hours: "48小时",
-      status: "进行中",
-      color: "from-blue-500 to-cyan-500",
-    },
-    {
-      id: 2,
-      title: "数据结构与算法",
-      instructor: "李教授",
-      progress: 60,
-      students: 95,
-      hours: "40小时",
-      status: "进行中",
-      color: "from-purple-500 to-pink-500",
-    },
-    {
-      id: 3,
-      title: "机器学习实战",
-      instructor: "王教授",
-      progress: 45,
-      students: 80,
-      hours: "56小时",
-      status: "进行中",
-      color: "from-orange-500 to-red-500",
-    },
-    {
-      id: 4,
-      title: "深度学习进阶",
-      instructor: "刘教授",
-      progress: 30,
-      students: 65,
-      hours: "60小时",
-      status: "进行中",
-      color: "from-green-500 to-emerald-500",
-    },
+    // {
+    //   id: 1,
+    //   title: "人工智能基础",
+    //   instructor: "张教授",
+    //   progress: 75,
+    //   students: 120,
+    //   hours: "48小时",
+    //   status: "进行中",
+    //   color: "from-blue-500 to-cyan-500",
+    // },
+    // {
+    //   id: 2,
+    //   title: "数据结构与算法",
+    //   instructor: "李教授",
+    //   progress: 60,
+    //   students: 95,
+    //   hours: "40小时",
+    //   status: "进行中",
+    //   color: "from-purple-500 to-pink-500",
+    // },
+    // {
+    //   id: 3,
+    //   title: "机器学习实战",
+    //   instructor: "王教授",
+    //   progress: 45,
+    //   students: 80,
+    //   hours: "56小时",
+    //   status: "进行中",
+    //   color: "from-orange-500 to-red-500",
+    // },
+    // {
+    //   id: 4,
+    //   title: "深度学习进阶",
+    //   instructor: "刘教授",
+    //   progress: 30,
+    //   students: 65,
+    //   hours: "60小时",
+    //   status: "进行中",
+    //   color: "from-green-500 to-emerald-500",
+    // },
   ]);
 
   // 所有可用课程
   const [allCourses, setAllCourses] = useState([
-    {
-      id: 5,
-      title: "计算机网络",
-      instructor: "陈教授",
-      students: 150,
-      hours: "44小时",
-      description: "深入学习计算机网络原理和协议",
-      color: "from-indigo-500 to-purple-500",
-    },
-    {
-      id: 6,
-      title: "操作系统原理",
-      instructor: "赵教授",
-      students: 130,
-      hours: "52小时",
-      description: "系统学习操作系统的设计与实现",
-      color: "from-pink-500 to-rose-500",
-    },
-    {
-      id: 7,
-      title: "数据库系统",
-      instructor: "孙教授",
-      students: 110,
-      hours: "48小时",
-      description: "掌握数据库设计和SQL查询",
-      color: "from-teal-500 to-cyan-500",
-    },
+    // {
+    //   id: 5,
+    //   title: "计算机网络",
+    //   instructor: "陈教授",
+    //   students: 150,
+    //   hours: "44小时",
+    //   description: "深入学习计算机网络原理和协议",
+    //   color: "from-indigo-500 to-purple-500",
+    // },
+    // {
+    //   id: 6,
+    //   title: "操作系统原理",
+    //   instructor: "赵教授",
+    //   students: 130,
+    //   hours: "52小时",
+    //   description: "系统学习操作系统的设计与实现",
+    //   color: "from-pink-500 to-rose-500",
+    // },
+    // {
+    //   id: 7,
+    //   title: "数据库系统",
+    //   instructor: "孙教授",
+    //   students: 110,
+    //   hours: "48小时",
+    //   description: "掌握数据库设计和SQL查询",
+    //   color: "from-teal-500 to-cyan-500",
+    // },
   ]);
+
+  const colorArray = [
+    "from-blue-500 to-cyan-500",
+    "from-purple-500 to-pink-500",
+    "from-orange-500 to-red-500",
+    "from-green-500 to-emerald-500",
+    "from-indigo-500 to-purple-500",
+    "from-pink-500 to-rose-500",
+    "from-teal-500 to-cyan-500",
+  ];
 
   // 新课程表单状态
   const [newCourse, setNewCourse] = useState({
@@ -106,6 +117,83 @@ const Courses = () => {
     hours: "",
     description: "",
   });
+
+  // 将 fetchCourses 提取为独立函数，方便复用
+  const fetchCourses = async () => {
+    try {
+      const res = await axios.post("/api/get_all_courses", {},
+        { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
+      );
+      const res2 = await axios.post("/api//get_selected_courses", {}, {
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+      })
+      console.log('获取到的课程数据:', res.data.courses);
+      console.log('获取到的已选课程数据:', res2.data.courses);
+
+      if (res.data.courses && res.data.courses.length > 0) {
+        let myAllCourses: any[] = [];
+        let myMyCourses: any[] = [];
+
+        res.data.courses.forEach((course: any, index: number) => {
+          // 确保 course_id 是数字，如果不是则使用 index
+          const courseIdNum = typeof course.course_id === 'number'
+            ? course.course_id
+            : parseInt(course.course_id) || index;
+
+          const colorIndex = courseIdNum % colorArray.length;
+          const selectedColor = colorArray[colorIndex];
+
+          // console.log(`课程 ${course.course_name} - courseId: ${courseIdNum}, colorIndex: ${colorIndex}, color: ${selectedColor}`);
+
+          // 为所有课程列表添加
+          myAllCourses.push({
+            id: courseIdNum,
+            title: course.course_name || "未命名课程",
+            instructor: course.teacher_name || "未知教师",
+            students: 0,
+            hours: course.bei1 || "0小时",
+            description: course.course_info || "",
+            color: selectedColor,
+            course_id: course.course_id, // 保留原始 course_id
+          });
+        });
+        res2.data.courses.forEach((course: any, index: number) => {
+          // 确保 course_id 是数字，如果不是则使用 index
+          const courseIdNum = typeof course.course_id === 'number'
+            ? course.course_id
+            : parseInt(course.course_id) || index;
+
+          const colorIndex = courseIdNum % colorArray.length;
+          const selectedColor = colorArray[colorIndex];
+
+          // console.log(`课程 ${course.course_name} - courseId: ${courseIdNum}, colorIndex: ${colorIndex}, color: ${selectedColor}`);
+
+          // 为我的课程列表添加
+          myMyCourses.push({
+            id: courseIdNum,
+            title: course.course_name || "未命名课程",
+            instructor: course.teacher_name || "未知教师",
+            progress: 0,
+            students: 0,
+            hours: course.bei1 || "0小时",
+            status: "进行中",
+            color: selectedColor,
+            course_id: course.course_id, // 保留原始 course_id
+          });
+        });
+
+        console.log('处理后的课程数据:', { myMyCourses, myAllCourses });
+        setMyCourses(myMyCourses);
+        setAllCourses(myAllCourses);
+      }
+    } catch (error) {
+      console.error('获取课程失败:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchCourses();
+  }, []);
 
   // 添加课程到系统
   async function handleAddCourse() {
@@ -117,42 +205,46 @@ const Courses = () => {
       });
       return;
     }
-    const res = await axios.post("/api/add_course", {
-      course_id: "",
-      course_name: newCourse.title,
-      teacher_id: "",
-      teacher_name: newCourse.instructor,
-      course_info: newCourse.description,
-      bei1: newCourse.hours, // 备用字段，课时
-    },
-      { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
-    );
-    console.log(res.data);
 
-    const course = {
-      id: Date.now(),
-      title: newCourse.title,
-      instructor: newCourse.instructor,
-      students: 0,
-      hours: newCourse.hours,
-      description: newCourse.description,
-      color: "from-blue-500 to-cyan-500",
-    };
+    try {
+      const res = await axios.post("/api/add_course", {
+        course_id: "",
+        course_name: newCourse.title,
+        teacher_id: "",
+        teacher_name: newCourse.instructor,
+        course_info: newCourse.description,
+        bei1: newCourse.hours, // 备用字段，课时
+      },
+        { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
+      );
+      console.log(res.data);
 
-    setAllCourses([...allCourses, course]);
-    setNewCourse({ title: "", instructor: "", hours: "", description: "" });
-    setIsAddDialogOpen(false);
+      // 重置表单并关闭对话框
+      setNewCourse({ title: "", instructor: "", hours: "", description: "" });
+      setIsAddDialogOpen(false);
 
-    toast({
-      title: "课程添加成功",
-      description: `${course.title} 已添加到课程库`,
-    });
+      // 显示成功提示
+      toast({
+        title: "课程添加成功",
+        description: `${newCourse.title} 已添加到课程库`,
+      });
+
+      // 重新获取课程列表
+      await fetchCourses();
+    } catch (error) {
+      console.error('添加课程失败:', error);
+      toast({
+        title: "添加失败",
+        description: "添加课程时发生错误，请重试",
+        variant: "destructive",
+      });
+    }
   };
 
   // 选课
-  const handleSelectCourse = (course: any) => {
+  async function handleSelectCourse(course: any) {
     // 检查是否已经选过
-    if (myCourses.some(c => c.id === course.id)) {
+    if (myCourses.some(c => c.course_id === course.course_id)) {
       toast({
         title: "已选过此课程",
         description: "您已经在学习这门课程了",
@@ -160,6 +252,17 @@ const Courses = () => {
       });
       return;
     }
+    const res = await axios.post("/api//add_select_course", {
+      course_id: course.course_id,
+      user_id: "",
+      bei1: "",
+      bei2: "",
+      bei3: "",
+      bei4: "",
+      bei5: ""
+    }, {
+      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+    });
 
     const newMyCourse = {
       ...course,
@@ -167,7 +270,8 @@ const Courses = () => {
       status: "进行中",
     };
 
-    setMyCourses([...myCourses, newMyCourse]);
+    // setMyCourses([...myCourses, newMyCourse]);
+    fetchCourses()
     setIsSelectDialogOpen(false);
 
     toast({
@@ -314,7 +418,7 @@ const Courses = () => {
                             disabled={myCourses.some(c => c.id === course.id)}
                             className="bg-gradient-to-r from-primary to-accent hover:opacity-90"
                           >
-                            {myCourses.some(c => c.id === course.id) ? "已选" : "选择"}
+                            {myCourses.some(c => c.course_id === course.course_id) ? "已选" : "选择"}
                           </Button>
                         </div>
                       </CardContent>
@@ -332,7 +436,7 @@ const Courses = () => {
           <Card
             key={course.id}
             className="border-border/50 hover:shadow-lg transition-all duration-300 hover:-translate-y-1 cursor-pointer relative group"
-            onClick={() => navigate(`/courses/${course.id}`)}
+            onClick={() => navigate(`/courses/${course.course_id}`, { state: { color: course.color } })}
           >
             {/* 三点菜单 */}
             <div className="absolute top-3 right-3 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-200">

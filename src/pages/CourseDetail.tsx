@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -10,11 +10,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { 
-  ArrowLeft, 
-  BookOpen, 
-  FileText, 
-  ClipboardCheck, 
+import {
+  ArrowLeft,
+  BookOpen,
+  FileText,
+  ClipboardCheck,
   HelpCircle,
   Download,
   Play,
@@ -24,11 +24,66 @@ import {
   Plus,
   Upload
 } from "lucide-react";
+import axios from "axios";
 
 const CourseDetail = () => {
   const { courseId } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const location = useLocation();
+  
+  // 从导航状态中获取颜色，如果没有则使用默认颜色
+  const passedColor = location.state?.color || "from-blue-500 to-cyan-500";
+
+  // 课程数据状态
+  const [course, setCourse] = useState({
+    id: courseId,
+    title: "加载中...",
+    instructor: "",
+    description: "",
+    progress: 0,
+    totalWeeks: 16,
+    currentWeek: 1,
+    students: 0,
+    color: passedColor,
+  });
+
+  async function getCourseDetail() {
+    try {
+      const res = await axios.post("/api/get_course_by_id", {
+        course_id: courseId
+      }, {
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+      });
+      console.log('获取到的课程详情:', res.data);
+      
+      if (res.data && res.data.course) {
+        const courseData = res.data.course;
+        setCourse({
+          id: courseId,
+          title: courseData.course_name || "未命名课程",
+          instructor: courseData.teacher_name || "未知教师",
+          description: courseData.course_info || "",
+          progress: courseData.progress || 0,
+          totalWeeks: courseData.total_weeks || 13,
+          currentWeek: courseData.current_week || 11,
+          students: courseData.students || 0,
+          color: passedColor, // 使用传递过来的颜色
+        });
+      }
+    } catch (error) {
+      console.error('获取课程详情失败:', error);
+      toast({
+        title: "加载失败",
+        description: "无法获取课程信息，请稍后重试",
+        variant: "destructive",
+      });
+    }
+  }
+
+  useEffect(() => {
+    getCourseDetail();
+  }, [courseId]);
 
   // 模拟用户角色 - 在实际应用中应该从认证系统获取
   const [isTeacher] = useState(true); // 改为 false 可查看学生视图
@@ -62,19 +117,6 @@ const CourseDetail = () => {
     name: "",
     description: "",
   });
-
-  // 模拟课程数据
-  const course = {
-    id: courseId,
-    title: "人工智能基础",
-    instructor: "张教授",
-    description: "本课程系统介绍人工智能的基本概念、核心算法和实际应用，包括机器学习、深度学习等前沿技术。",
-    progress: 75,
-    totalWeeks: 16,
-    currentWeek: 12,
-    students: 120,
-    color: "from-blue-500 to-cyan-500",
-  };
 
   // 每周课程内容
   const weeklyContent = [
@@ -344,7 +386,7 @@ const CourseDetail = () => {
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-muted-foreground">{course.description}</p>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4">
             <div className="text-center p-4 rounded-lg bg-secondary/50">
               <div className="text-3xl font-bold text-primary mb-1">{course.students}</div>
@@ -607,12 +649,10 @@ const CourseDetail = () => {
                       <CardContent className="p-4">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-4 flex-1">
-                            <div className={`w-12 h-12 rounded-lg bg-gradient-to-br ${
-                              assignment.status === "已完成" ? "from-green-500/20 to-emerald-500/20" : "from-orange-500/20 to-red-500/20"
-                            } flex items-center justify-center`}>
-                              <ClipboardCheck className={`w-6 h-6 ${
-                                assignment.status === "已完成" ? "text-green-600" : "text-orange-600"
-                              }`} />
+                            <div className={`w-12 h-12 rounded-lg bg-gradient-to-br ${assignment.status === "已完成" ? "from-green-500/20 to-emerald-500/20" : "from-orange-500/20 to-red-500/20"
+                              } flex items-center justify-center`}>
+                              <ClipboardCheck className={`w-6 h-6 ${assignment.status === "已完成" ? "text-green-600" : "text-orange-600"
+                                }`} />
                             </div>
                             <div className="flex-1">
                               <h4 className="font-semibold text-foreground mb-1">{assignment.name}</h4>
@@ -629,8 +669,8 @@ const CourseDetail = () => {
                               </div>
                             </div>
                           </div>
-                          <Button 
-                            size="sm" 
+                          <Button
+                            size="sm"
                             variant={assignment.status === "已完成" ? "outline" : "default"}
                             className={assignment.status === "已完成" ? "" : "bg-gradient-to-r from-primary to-accent hover:opacity-90"}
                           >
@@ -712,12 +752,10 @@ const CourseDetail = () => {
                       <CardContent className="p-4">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-4 flex-1">
-                            <div className={`w-12 h-12 rounded-lg bg-gradient-to-br ${
-                              quiz.status === "已完成" ? "from-purple-500/20 to-pink-500/20" : "from-blue-500/20 to-cyan-500/20"
-                            } flex items-center justify-center`}>
-                              <HelpCircle className={`w-6 h-6 ${
-                                quiz.status === "已完成" ? "text-purple-600" : "text-blue-600"
-                              }`} />
+                            <div className={`w-12 h-12 rounded-lg bg-gradient-to-br ${quiz.status === "已完成" ? "from-purple-500/20 to-pink-500/20" : "from-blue-500/20 to-cyan-500/20"
+                              } flex items-center justify-center`}>
+                              <HelpCircle className={`w-6 h-6 ${quiz.status === "已完成" ? "text-purple-600" : "text-blue-600"
+                                }`} />
                             </div>
                             <div className="flex-1">
                               <h4 className="font-semibold text-foreground mb-1">{quiz.name}</h4>
@@ -733,8 +771,8 @@ const CourseDetail = () => {
                               </div>
                             </div>
                           </div>
-                          <Button 
-                            size="sm" 
+                          <Button
+                            size="sm"
                             variant={quiz.status === "已完成" ? "outline" : "default"}
                             className={quiz.status === "已完成" ? "" : "bg-gradient-to-r from-primary to-accent hover:opacity-90"}
                           >
@@ -818,8 +856,8 @@ const CourseDetail = () => {
                               </div>
                             </div>
                           </div>
-                          <Button 
-                            size="sm" 
+                          <Button
+                            size="sm"
                             variant={survey.status === "已完成" ? "outline" : "default"}
                             className={survey.status === "已完成" ? "" : "bg-gradient-to-r from-primary to-accent hover:opacity-90"}
                           >
