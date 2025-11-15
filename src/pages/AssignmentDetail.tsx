@@ -6,9 +6,9 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { 
-  ArrowLeft, 
-  ClipboardCheck, 
+import {
+  ArrowLeft,
+  ClipboardCheck,
   Clock,
   Calendar,
   BookOpen,
@@ -21,6 +21,7 @@ import {
   Save,
   X
 } from "lucide-react";
+import axios from "axios";
 
 const AssignmentDetail = () => {
   const { assignmentId, state } = useParams();
@@ -94,7 +95,7 @@ const AssignmentDetail = () => {
     }
   };
 
-  const handleEdit = () => {
+  async function handleEdit() {
     setEditedAssignment({
       name: assignment.name,
       description: assignment.description,
@@ -106,7 +107,28 @@ const AssignmentDetail = () => {
     setIsEditing(true);
   };
 
-  const handleSave = () => {
+  async function handleSave() {
+    let ass = {
+      id: assignment.id,
+      name: assignment.name,
+      score: assignment.score,
+      status: assignment.status,
+      yaoqiu: assignment.requirements,
+      deadline: assignment.deadline,
+      fabu_time: assignment.publishDate,
+      course_name: assignment.course,
+      description: assignment.description,
+      teacher_name: assignment.instructor,
+      huanjingyaoqiu: "",
+      maxscore: assignment.maxScore
+    }
+    console.log(ass);
+    const res = await axios.post("/api/updateassignment", {
+      course_week_id: assignment.id,
+      assignments: [ass]
+    }, {
+      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+    });
     setAssignment({
       ...assignment,
       ...editedAssignment,
@@ -197,19 +219,17 @@ const AssignmentDetail = () => {
       </div>
 
       {/* 作业状态卡片 */}
-      <Card className={`border-2 ${
-        assignment.status === "已完成" ? "border-green-500/50 bg-green-500/5" :
+      <Card className={`border-2 ${assignment.status === "已完成" ? "border-green-500/50 bg-green-500/5" :
         isOverdue ? "border-red-500/50 bg-red-500/5" :
-        "border-orange-500/50 bg-orange-500/5"
-      }`}>
+          "border-orange-500/50 bg-orange-500/5"
+        }`}>
         <CardContent className="p-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <div className={`w-16 h-16 rounded-xl bg-gradient-to-br ${
-                assignment.status === "已完成" ? "from-green-500 to-emerald-500" :
+              <div className={`w-16 h-16 rounded-xl bg-gradient-to-br ${assignment.status === "已完成" ? "from-green-500 to-emerald-500" :
                 isOverdue ? "from-red-500 to-orange-500" :
-                "from-orange-500 to-yellow-500"
-              } flex items-center justify-center`}>
+                  "from-orange-500 to-yellow-500"
+                } flex items-center justify-center`}>
                 {assignment.status === "已完成" ? (
                   <CheckCircle2 className="w-8 h-8 text-white" />
                 ) : (
@@ -305,7 +325,7 @@ const AssignmentDetail = () => {
                     <p className="text-xs text-muted-foreground mt-1">支持 ZIP, PDF, DOCX 等格式，最大 20MB</p>
                   </div>
                 </div>
-                <Button 
+                <Button
                   onClick={handleSubmit}
                   className="w-full bg-gradient-to-r from-primary to-accent hover:opacity-90"
                   disabled={isOverdue}
