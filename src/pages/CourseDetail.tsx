@@ -34,7 +34,7 @@ const CourseDetail = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const location = useLocation();
-  
+
   // 从导航状态中获取颜色，如果没有则使用默认颜色
   const passedColor = location.state?.color || "from-blue-500 to-cyan-500";
 
@@ -49,76 +49,6 @@ const CourseDetail = () => {
     currentWeek: 1,
     students: 0,
     color: passedColor,
-  });
-
-  async function getCourseDetail() {
-    try {
-      const res = await axios.post("/api/get_course_by_id", {
-        course_id: courseId
-      }, {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
-      });
-      console.log('获取到的课程详情:', res.data);
-      
-      if (res.data && res.data.course) {
-        const courseData = res.data.course;
-        setCourse({
-          id: courseId,
-          title: courseData.course_name || "未命名课程",
-          instructor: courseData.teacher_name || "未知教师",
-          description: courseData.course_info || "",
-          progress: courseData.progress || 0,
-          totalWeeks: courseData.total_weeks || 13,
-          currentWeek: courseData.current_week || 11,
-          students: courseData.students || 0,
-          color: passedColor, // 使用传递过来的颜色
-        });
-      }
-    } catch (error) {
-      console.error('获取课程详情失败:', error);
-      toast({
-        title: "加载失败",
-        description: "无法获取课程信息，请稍后重试",
-        variant: "destructive",
-      });
-    }
-  }
-
-  useEffect(() => {
-    getCourseDetail();
-  }, [courseId]);
-
-  // 模拟用户角色 - 在实际应用中应该从认证系统获取
-  const [isTeacher] = useState(true); // 改为 false 可查看学生视图
-
-  // 对话框状态
-  const [isMaterialDialogOpen, setIsMaterialDialogOpen] = useState(false);
-  const [isAssignmentDialogOpen, setIsAssignmentDialogOpen] = useState(false);
-  const [isQuizDialogOpen, setIsQuizDialogOpen] = useState(false);
-  const [isSurveyDialogOpen, setIsSurveyDialogOpen] = useState(false);
-
-  // 表单状态
-  const [materialForm, setMaterialForm] = useState({
-    name: "",
-    type: "PDF",
-    file: null as File | null,
-  });
-
-  const [assignmentForm, setAssignmentForm] = useState({
-    name: "",
-    deadline: "",
-    description: "",
-  });
-
-  const [quizForm, setQuizForm] = useState({
-    name: "",
-    questions: "",
-    time: "",
-  });
-
-  const [surveyForm, setSurveyForm] = useState({
-    name: "",
-    description: "",
   });
 
   // 每周课程内容
@@ -268,7 +198,111 @@ const CourseDetail = () => {
     },
   ];
 
-  const [weeklyContentState, setWeeklyContentState] = useState(weeklyContent);
+  const [weeklyContentState, setWeeklyContentState] = useState(() =>
+    JSON.parse(JSON.stringify(weeklyContent))
+  );
+
+  async function getCourseDetail() {
+    try {
+      const res = await axios.post("/api/get_course_by_id", {
+        course_id: courseId
+      }, {
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+      });
+      console.log('获取到的课程详情:', res.data);
+
+      if (res.data && res.data.course) {
+        const courseData = res.data.course;
+        setCourse({
+          id: courseId,
+          title: courseData.course_name || "未命名课程",
+          instructor: courseData.teacher_name || "未知教师",
+          description: courseData.course_info || "",
+          progress: courseData.progress || 0,
+          totalWeeks: courseData.total_weeks || 13,
+          currentWeek: courseData.current_week || 11,
+          students: courseData.students || 0,
+          color: passedColor, // 使用传递过来的颜色
+        });
+      }
+    } catch (error) {
+      console.error('获取课程详情失败:', error);
+      toast({
+        title: "加载失败",
+        description: "无法获取课程信息，请稍后重试",
+        variant: "destructive",
+      });
+    }
+  }
+
+  async function getWeekDetail() {
+    const res = await axios.post("/api/getweekbycourseid", {
+      course_id: courseId
+    }, {
+      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+    });
+    console.log(res.data.weeks);
+
+    // 深拷贝 weeklyContent 避免引用污染
+    const weeklyContentCopy = JSON.parse(JSON.stringify(weeklyContent));
+
+    for (let week of res.data.weeks) {
+      for (let wc of weeklyContentCopy) {
+        if (week.week_id === wc.week.toString()) {
+          wc.title = week.title;
+          wc.date = week.date;
+          wc.materials = week.materials || [];
+          wc.assignments = week.assignments || [];
+          wc.quizzes = week.quizzes || [];
+          wc.surveys = week.surveys || [];
+        }
+      }
+    }
+    console.log(weeklyContentCopy);
+    setWeeklyContentState(weeklyContentCopy);
+  }
+
+  useEffect(() => {
+    getCourseDetail();
+    getWeekDetail();
+  }, [courseId]);
+
+  // 模拟用户角色 - 在实际应用中应该从认证系统获取
+  const [isTeacher] = useState(true); // 改为 false 可查看学生视图
+
+  // 对话框状态
+  const [isMaterialDialogOpen, setIsMaterialDialogOpen] = useState(false);
+  const [isAssignmentDialogOpen, setIsAssignmentDialogOpen] = useState(false);
+  const [isQuizDialogOpen, setIsQuizDialogOpen] = useState(false);
+  const [isSurveyDialogOpen, setIsSurveyDialogOpen] = useState(false);
+
+  // 表单状态
+  const [materialForm, setMaterialForm] = useState({
+    name: "",
+    type: "PDF",
+    file: null as File | null,
+  });
+
+  const [assignmentForm, setAssignmentForm] = useState({
+    name: "",
+    deadline: "",
+    description: "",
+  });
+
+  const [quizForm, setQuizForm] = useState({
+    name: "",
+    questions: "",
+    time: "",
+  });
+
+  const [surveyForm, setSurveyForm] = useState({
+    name: "",
+    description: "",
+  });
+
+
+
+
   const [selectedWeek, setSelectedWeek] = useState(1);
   const [isEditingWeek, setIsEditingWeek] = useState(false);
   const [editWeekForm, setEditWeekForm] = useState({
@@ -278,7 +312,7 @@ const CourseDetail = () => {
   const currentWeekContent = weeklyContentState.find(w => w.week === selectedWeek);
 
   // 发布资料
-  const handlePublishMaterial = () => {
+  async function handlePublishMaterial() {
     if (!materialForm.name) {
       toast({
         title: "请填写资料名称",
@@ -287,13 +321,80 @@ const CourseDetail = () => {
       return;
     }
 
-    toast({
-      title: "资料发布成功",
-      description: `${materialForm.name} 已发布到第 ${selectedWeek} 周`,
-    });
+    if (!materialForm.file) {
+      toast({
+        title: "请选择文件",
+        variant: "destructive",
+      });
+      return;
+    }
 
-    setMaterialForm({ name: "", type: "PDF", file: null });
-    setIsMaterialDialogOpen(false);
+    try {
+      // 获取原始文件的扩展名
+      const originalFileName = materialForm.file.name;
+      const fileExtension = originalFileName.substring(originalFileName.lastIndexOf('.'));
+      
+      // 确保文件名包含扩展名
+      let fullFileName = materialForm.name;
+      if (!fullFileName.includes('.')) {
+        fullFileName = fullFileName + fileExtension;
+      }
+      
+      // 第一步：获取上传URL
+      const res = await axios.post("/api/file_upload", {
+        file_name: fullFileName,
+        class_id: courseId?.toString() || "",
+        user_id: localStorage.getItem("user_id")?.toString() || "",
+        description: materialForm.type.toString(),
+      }, {
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+      });
+
+      console.log('获取上传URL:', res.data.file_upload_url);
+      const uploadurl = res.data.file_upload_url;
+
+      // 第二步：使用PUT方法上传文件到uploadurl
+      // 不设置 Content-Type 以避免触发 CORS preflight
+      const res2 = await axios.put(uploadurl, materialForm.file);
+      let file_url = res.data.file_name
+      let file_name = fullFileName
+      let file_type = materialForm.type.toString()
+      // 将字节转换为 MB
+      let file_size = (materialForm.file.size / (1024 * 1024)).toFixed(2) + " MB"
+
+      const res3 = await axios.post("/api/updatematerials", {
+        course_week_id: courseId + selectedWeek.toString(),
+        materials: [
+          {
+            id: file_url,
+            name: file_name,
+            type: file_type,
+            size: file_size,
+            completed: "true"
+          }
+        ]
+      }, {
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+      });
+
+      toast({
+        title: "资料发布成功",
+        description: `${materialForm.name} 已发布到第 ${selectedWeek} 周`,
+      });
+
+      // 刷新页面数据以显示新添加的材料
+      await getWeekDetail();
+
+      setMaterialForm({ name: "", type: "PDF", file: null });
+      setIsMaterialDialogOpen(false);
+    } catch (error) {
+      console.error('上传失败:', error);
+      toast({
+        title: "上传失败",
+        description: "请稍后重试",
+        variant: "destructive",
+      });
+    }
   };
 
   // 发布作业
@@ -366,7 +467,7 @@ const CourseDetail = () => {
   };
 
   // 保存周次信息
-  const handleSaveWeek = () => {
+  async function handleSaveWeek() {
     if (!editWeekForm.title.trim()) {
       toast({
         title: "请填写周次标题",
@@ -382,9 +483,18 @@ const CourseDetail = () => {
       });
       return;
     }
+    const res = await axios.post("/api/weekupdatetitle", {
+      course_week_id: "97",
+      course_id: courseId,
+      week_id: selectedWeek.toString(),
+      title: editWeekForm.title,
+      date: editWeekForm.date
+    }, {
+      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+    });
 
-    setWeeklyContentState(prev => 
-      prev.map(week => 
+    setWeeklyContentState(prev =>
+      prev.map(week =>
         week.week === selectedWeek
           ? { ...week, title: editWeekForm.title, date: editWeekForm.date }
           : week
@@ -403,6 +513,20 @@ const CourseDetail = () => {
   const handleCancelEdit = () => {
     setIsEditingWeek(false);
     setEditWeekForm({ title: "", date: "" });
+  };
+
+  // 处理材料点击事件（播放或下载）
+  async function handleMaterialClick(materialId: string | number) {
+    const res = await axios.post("/api/file_download", {
+      file_name: materialId.toString()
+    }, {
+      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+    });
+    
+    const downloadurl = res.data.file_download_url;
+    
+    // 在新标签页中打开下载链接
+    window.open(downloadurl, '_blank');
   };
 
   const getStatusColor = (status: string) => {
@@ -683,12 +807,20 @@ const CourseDetail = () => {
                           </div>
                           <div className="flex gap-2">
                             {material.type === "视频" ? (
-                              <Button size="sm" className="bg-gradient-to-r from-primary to-accent hover:opacity-90">
+                              <Button
+                                size="sm"
+                                className="bg-gradient-to-r from-primary to-accent hover:opacity-90"
+                                onClick={() => handleMaterialClick(material.id)}
+                              >
                                 <Play className="w-4 h-4 mr-1" />
                                 播放
                               </Button>
                             ) : (
-                              <Button size="sm" variant="outline">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleMaterialClick(material.id)}
+                              >
                                 <Download className="w-4 h-4 mr-1" />
                                 下载
                               </Button>
