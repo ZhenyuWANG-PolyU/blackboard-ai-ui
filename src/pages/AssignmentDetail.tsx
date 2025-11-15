@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { 
   ArrowLeft, 
@@ -15,7 +16,10 @@ import {
   Upload,
   FileText,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  Edit,
+  Save,
+  X
 } from "lucide-react";
 
 const AssignmentDetail = () => {
@@ -23,9 +27,18 @@ const AssignmentDetail = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [submission, setSubmission] = useState("");
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedAssignment, setEditedAssignment] = useState({
+    name: "",
+    description: "",
+    deadline: "",
+    publishDate: "",
+    maxScore: 100,
+    requirements: [] as string[],
+  });
 
   // 模拟作业详情数据
-  const assignment = {
+  const [assignment, setAssignment] = useState({
     id: assignmentId,
     name: "机器学习项目实现",
     course: "人工智能基础",
@@ -35,8 +48,7 @@ const AssignmentDetail = () => {
     status: "进行中", // 进行中、已完成、已逾期
     score: null,
     maxScore: 100,
-    description: `
-请完成以下任务：
+    description: `请完成以下任务：
 
 1. 使用Python实现一个简单的线性回归模型
 2. 在提供的数据集上训练模型
@@ -46,8 +58,7 @@ const AssignmentDetail = () => {
 要求：
 - 代码需要有完整的注释
 - 实验报告需要包含：问题描述、方法介绍、实验结果、结论分析
-- 提交格式：压缩包（包含代码和报告）
-    `,
+- 提交格式：压缩包（包含代码和报告）`,
     requirements: [
       "Python 3.8+",
       "NumPy, Pandas, Matplotlib",
@@ -63,7 +74,7 @@ const AssignmentDetail = () => {
         feedback: "代码实现优秀，报告分析深入，建议在可视化部分增加更多图表。",
       },
     ],
-  };
+  });
 
   const handleSubmit = () => {
     if (!submission.trim()) {
@@ -95,6 +106,52 @@ const AssignmentDetail = () => {
     }
   };
 
+  const handleEdit = () => {
+    setEditedAssignment({
+      name: assignment.name,
+      description: assignment.description,
+      deadline: assignment.deadline,
+      publishDate: assignment.publishDate,
+      maxScore: assignment.maxScore,
+      requirements: [...assignment.requirements],
+    });
+    setIsEditing(true);
+  };
+
+  const handleSave = () => {
+    setAssignment({
+      ...assignment,
+      ...editedAssignment,
+    });
+    setIsEditing(false);
+    toast({
+      title: "保存成功",
+      description: "作业信息已更新",
+    });
+  };
+
+  const handleCancel = () => {
+    setIsEditing(false);
+  };
+
+  const handleRequirementChange = (index: number, value: string) => {
+    const newRequirements = [...editedAssignment.requirements];
+    newRequirements[index] = value;
+    setEditedAssignment({ ...editedAssignment, requirements: newRequirements });
+  };
+
+  const handleAddRequirement = () => {
+    setEditedAssignment({
+      ...editedAssignment,
+      requirements: [...editedAssignment.requirements, ""],
+    });
+  };
+
+  const handleRemoveRequirement = (index: number) => {
+    const newRequirements = editedAssignment.requirements.filter((_, i) => i !== index);
+    setEditedAssignment({ ...editedAssignment, requirements: newRequirements });
+  };
+
   const isOverdue = new Date(assignment.deadline) < new Date();
   const daysLeft = Math.ceil((new Date(assignment.deadline).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
 
@@ -111,7 +168,15 @@ const AssignmentDetail = () => {
           <ArrowLeft className="w-5 h-5" />
         </Button>
         <div className="flex-1">
-          <h1 className="text-4xl font-bold text-foreground mb-2">{assignment.name}</h1>
+          {isEditing ? (
+            <Input
+              value={editedAssignment.name}
+              onChange={(e) => setEditedAssignment({ ...editedAssignment, name: e.target.value })}
+              className="text-4xl font-bold h-auto py-2 mb-2"
+            />
+          ) : (
+            <h1 className="text-4xl font-bold text-foreground mb-2">{assignment.name}</h1>
+          )}
           <div className="flex items-center gap-3 text-muted-foreground">
             <div className="flex items-center gap-1">
               <BookOpen className="w-4 h-4" />
@@ -124,6 +189,23 @@ const AssignmentDetail = () => {
             </div>
           </div>
         </div>
+        {!isEditing ? (
+          <Button onClick={handleEdit} variant="outline">
+            <Edit className="w-4 h-4 mr-2" />
+            编辑
+          </Button>
+        ) : (
+          <div className="flex gap-2">
+            <Button onClick={handleSave} variant="default">
+              <Save className="w-4 h-4 mr-2" />
+              保存
+            </Button>
+            <Button onClick={handleCancel} variant="outline">
+              <X className="w-4 h-4 mr-2" />
+              取消
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* 作业状态卡片 */}
@@ -193,9 +275,18 @@ const AssignmentDetail = () => {
               <CardDescription>请仔细阅读以下要求并按时完成</CardDescription>
             </CardHeader>
             <CardContent>
-              <pre className="whitespace-pre-wrap text-sm text-foreground leading-relaxed">
-                {assignment.description}
-              </pre>
+              {isEditing ? (
+                <Textarea
+                  value={editedAssignment.description}
+                  onChange={(e) => setEditedAssignment({ ...editedAssignment, description: e.target.value })}
+                  className="min-h-[300px] font-mono"
+                  placeholder="输入作业要求..."
+                />
+              ) : (
+                <pre className="whitespace-pre-wrap text-sm text-foreground leading-relaxed">
+                  {assignment.description}
+                </pre>
+              )}
             </CardContent>
           </Card>
 
@@ -278,17 +369,44 @@ const AssignmentDetail = () => {
               <CardTitle className="text-base">基本信息</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3 text-sm">
-              <div className="flex justify-between">
+              <div className="flex justify-between items-center">
                 <span className="text-muted-foreground">发布时间</span>
-                <span className="font-medium">{assignment.publishDate}</span>
+                {isEditing ? (
+                  <Input
+                    type="date"
+                    value={editedAssignment.publishDate}
+                    onChange={(e) => setEditedAssignment({ ...editedAssignment, publishDate: e.target.value })}
+                    className="w-auto h-8 text-sm"
+                  />
+                ) : (
+                  <span className="font-medium">{assignment.publishDate}</span>
+                )}
               </div>
-              <div className="flex justify-between">
+              <div className="flex justify-between items-center">
                 <span className="text-muted-foreground">截止时间</span>
-                <span className="font-medium">{assignment.deadline}</span>
+                {isEditing ? (
+                  <Input
+                    type="date"
+                    value={editedAssignment.deadline}
+                    onChange={(e) => setEditedAssignment({ ...editedAssignment, deadline: e.target.value })}
+                    className="w-auto h-8 text-sm"
+                  />
+                ) : (
+                  <span className="font-medium">{assignment.deadline}</span>
+                )}
               </div>
-              <div className="flex justify-between">
+              <div className="flex justify-between items-center">
                 <span className="text-muted-foreground">满分</span>
-                <span className="font-medium">{assignment.maxScore} 分</span>
+                {isEditing ? (
+                  <Input
+                    type="number"
+                    value={editedAssignment.maxScore}
+                    onChange={(e) => setEditedAssignment({ ...editedAssignment, maxScore: parseInt(e.target.value) || 0 })}
+                    className="w-20 h-8 text-sm"
+                  />
+                ) : (
+                  <span className="font-medium">{assignment.maxScore} 分</span>
+                )}
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">提交情况</span>
@@ -302,17 +420,47 @@ const AssignmentDetail = () => {
           {/* 环境要求 */}
           <Card className="border-border/50">
             <CardHeader>
-              <CardTitle className="text-base">环境要求</CardTitle>
+              <CardTitle className="text-base flex items-center justify-between">
+                <span>环境要求</span>
+                {isEditing && (
+                  <Button onClick={handleAddRequirement} size="sm" variant="outline">
+                    添加
+                  </Button>
+                )}
+              </CardTitle>
             </CardHeader>
             <CardContent>
-              <ul className="space-y-2 text-sm">
-                {assignment.requirements.map((req, index) => (
-                  <li key={index} className="flex items-start gap-2">
-                    <div className="w-1.5 h-1.5 rounded-full bg-primary mt-2 flex-shrink-0" />
-                    <span className="text-muted-foreground">{req}</span>
-                  </li>
-                ))}
-              </ul>
+              {isEditing ? (
+                <div className="space-y-2">
+                  {editedAssignment.requirements.map((req, index) => (
+                    <div key={index} className="flex items-center gap-2">
+                      <Input
+                        value={req}
+                        onChange={(e) => handleRequirementChange(index, e.target.value)}
+                        placeholder="环境要求"
+                        className="text-sm"
+                      />
+                      <Button
+                        onClick={() => handleRemoveRequirement(index)}
+                        size="icon"
+                        variant="ghost"
+                        className="h-8 w-8"
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <ul className="space-y-2 text-sm">
+                  {assignment.requirements.map((req, index) => (
+                    <li key={index} className="flex items-start gap-2">
+                      <div className="w-1.5 h-1.5 rounded-full bg-primary mt-2 flex-shrink-0" />
+                      <span className="text-muted-foreground">{req}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </CardContent>
           </Card>
 
