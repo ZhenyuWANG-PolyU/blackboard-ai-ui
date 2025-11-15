@@ -317,7 +317,7 @@ const CourseDetail = () => {
     const currentWeekTitle = currentWeekContent?.title || "";
     const currentWeekDate = currentWeekContent?.date || "";
     const res = await axios.post("/api/weekupdatetitle", {
-      course_week_id: "97",
+      course_week_id: courseId + selectedWeek.toString(),
       course_id: courseId,
       week_id: selectedWeek.toString(),
       title: currentWeekTitle,
@@ -504,7 +504,7 @@ const CourseDetail = () => {
       return;
     }
     const res = await axios.post("/api/weekupdatetitle", {
-      course_week_id: "97",
+      course_week_id: courseId + selectedWeek.toString(),
       course_id: courseId,
       week_id: selectedWeek.toString(),
       title: editWeekForm.title,
