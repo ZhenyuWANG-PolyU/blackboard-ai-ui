@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -30,6 +30,8 @@ const AssignmentDetail = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [submission, setSubmission] = useState("");
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [editedAssignment, setEditedAssignment] = useState({
     name: "",
@@ -65,10 +67,34 @@ const AssignmentDetail = () => {
     ],
   });
 
-  const handleSubmit = () => {
-    if (!submission.trim()) {
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      // 检查文件大小（20MB限制）
+      if (file.size > 20 * 1024 * 1024) {
+        toast({
+          title: "文件过大",
+          description: "文件大小不能超过 20MB",
+          variant: "destructive",
+        });
+        return;
+      }
+      setSelectedFile(file);
       toast({
-        title: "请输入作业内容",
+        title: "文件已选择",
+        description: file.name,
+      });
+    }
+  };
+
+  const handleUploadClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleSubmit = () => {
+    if (!submission.trim() && !selectedFile) {
+      toast({
+        title: "请输入作业内容或上传文件",
         variant: "destructive",
       });
       return;
@@ -80,6 +106,10 @@ const AssignmentDetail = () => {
     });
 
     setSubmission("");
+    setSelectedFile(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
   };
 
   const getStatusColor = (status: string) => {
@@ -319,10 +349,29 @@ const AssignmentDetail = () => {
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-medium">上传文件</label>
-                  <div className="border-2 border-dashed border-border rounded-lg p-8 text-center hover:border-primary/50 transition-colors cursor-pointer">
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    onChange={handleFileSelect}
+                    accept=".zip,.pdf,.docx,.doc,.txt,.ppt,.pptx"
+                    className="hidden"
+                  />
+                  <div 
+                    onClick={handleUploadClick}
+                    className="border-2 border-dashed border-border rounded-lg p-8 text-center hover:border-primary/50 transition-colors cursor-pointer"
+                  >
                     <Upload className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
                     <p className="text-sm text-muted-foreground">点击或拖拽文件到此处上传</p>
                     <p className="text-xs text-muted-foreground mt-1">支持 ZIP, PDF, DOCX 等格式，最大 20MB</p>
+                    {selectedFile && (
+                      <div className="mt-3 flex items-center justify-center gap-2 text-primary">
+                        <FileText className="w-4 h-4" />
+                        <span className="text-sm font-medium">{selectedFile.name}</span>
+                        <span className="text-xs text-muted-foreground">
+                          ({(selectedFile.size / 1024 / 1024).toFixed(2)} MB)
+                        </span>
+                      </div>
+                    )}
                   </div>
                 </div>
                 <Button
