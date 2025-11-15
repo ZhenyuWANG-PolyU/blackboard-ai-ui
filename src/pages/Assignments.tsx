@@ -50,8 +50,8 @@ const Assignments = () => {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-4xl font-bold text-foreground mb-2">作业与评测</h1>
-        <p className="text-muted-foreground text-lg">管理您的作业和查看评测结果</p>
+        <h1 className="text-4xl font-bold text-foreground mb-2">在线作业</h1>
+        <p className="text-muted-foreground text-lg">管理您的作业</p>
       </div>
 
       <Tabs defaultValue="pending" className="space-y-6">

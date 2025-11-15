@@ -18,7 +18,7 @@ const menuItems = [
   { title: "主页", url: "/dashboard", icon: Home },
   { title: "课程", url: "/courses", icon: BookOpen },
   { title: "学习资料", url: "/materials", icon: FileText },
-  { title: "作业与评测", url: "/assignments", icon: ClipboardCheck },
+  { title: "查看作业", url: "/assignments", icon: ClipboardCheck },
   { title: "在线测验", url: "/quizzes", icon: Brain },
   { title: "在线问卷", url: "/surveys", icon: ClipboardList },
   { title: "学习统计", url: "/statistics", icon: TrendingUp },
