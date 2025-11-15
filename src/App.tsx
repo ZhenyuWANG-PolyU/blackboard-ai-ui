@@ -22,6 +22,7 @@ import AIAssistant from "./pages/AIAssistant";
 import Profile from "./pages/Profile";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
+import GradingDetail from "./pages/GradingDetail";
 
 const queryClient = new QueryClient();
 
@@ -42,6 +43,7 @@ const App = () => (
             <Route path="/materials/:materialId" element={<MaterialDetail />} />
             <Route path="/assignments" element={<Assignments />} />
             <Route path="/assignments/:assignmentId" element={<AssignmentDetail />} />
+            <Route path="/grading-detail/:submissionId" element={<GradingDetail />} />
             <Route path="/quizzes" element={<Quizzes />} />
             <Route path="/quizzes/:quizId" element={<QuizDetail />} />
             <Route path="/surveys" element={<Surveys />} />
