@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -22,6 +22,7 @@ import {
   X
 } from "lucide-react";
 import axios from "axios";
+import { get } from "http";
 
 const AssignmentDetail = () => {
   const { assignmentId, state } = useParams();
@@ -41,6 +42,7 @@ const AssignmentDetail = () => {
     maxScore: 100,
     requirements: [] as string[],
   });
+
 
   // 模拟作业详情数据
   const [assignment, setAssignment] = useState({
@@ -67,6 +69,37 @@ const AssignmentDetail = () => {
     ],
   });
 
+  async function getAssignSubmit() {
+    let res = await axios.post("/api/get_submits_by_assign_id", {
+      assign_id: assignment.id
+    }, {
+      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+    });
+    console.log(res.data.assign_submits);
+    let subs = [];
+    for (let i = 0; i < res.data.assign_submits.length; i++) {
+      let sub = res.data.assign_submits[i];
+      subs.push({
+        date: sub.submit_date,
+        file: sub.file_name,
+        score: sub.score,
+        feedback: sub.feedback,
+        uuid: sub.uuid,
+        assign_id: sub.assign_id,
+        user_id: sub.user_id,
+        file_url: sub.file_url,
+        assign_description: sub.assign_description
+      })
+    }
+    setAssignment(prev => ({
+      ...prev,
+      submissions: subs
+    }));
+  }
+  useEffect(() => {
+    getAssignSubmit();
+  }, []);
+
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
@@ -91,14 +124,40 @@ const AssignmentDetail = () => {
     fileInputRef.current?.click();
   };
 
-  const handleSubmit = () => {
-    if (!submission.trim() && !selectedFile) {
+  async function handleSubmit() {
+    if (!submission.trim() || !selectedFile) {
       toast({
-        title: "请输入作业内容或上传文件",
+        title: "请输入作业内容并上传文件",
         variant: "destructive",
       });
       return;
     }
+    let res = await axios.post("/api/file_upload", {
+      file_name: selectedFile.name,
+      class_id: "",
+      user_id: "",
+      description: submission
+    }, {
+      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+    });
+    console.log(res.data);
+    const uploadurl = res.data.file_upload_url;
+    const res2 = await axios.put(uploadurl, selectedFile);
+
+    const res3 = await axios.post("/api/submit_homework", {
+      assign_id: assignment.id,
+      user_id: "",
+      file_url: res.data.file_name,
+      file_name: selectedFile.name,
+      submit_date: new Date().toISOString().split('T')[0],
+      score: "待批改",
+      feedback: "待批改",
+      assign_description: submission
+    }, {
+      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+    });
+
+    await getAssignSubmit();
 
     toast({
       title: "提交成功",
@@ -356,7 +415,7 @@ const AssignmentDetail = () => {
                     accept=".zip,.pdf,.docx,.doc,.txt,.ppt,.pptx"
                     className="hidden"
                   />
-                  <div 
+                  <div
                     onClick={handleUploadClick}
                     className="border-2 border-dashed border-border rounded-lg p-8 text-center hover:border-primary/50 transition-colors cursor-pointer"
                   >
