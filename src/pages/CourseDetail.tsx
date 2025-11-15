@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -333,13 +333,13 @@ const CourseDetail = () => {
       // 获取原始文件的扩展名
       const originalFileName = materialForm.file.name;
       const fileExtension = originalFileName.substring(originalFileName.lastIndexOf('.'));
-
+      
       // 确保文件名包含扩展名
       let fullFileName = materialForm.name;
       if (!fullFileName.includes('.')) {
         fullFileName = fullFileName + fileExtension;
       }
-
+      
       // 第一步：获取上传URL
       const res = await axios.post("/api/file_upload", {
         file_name: fullFileName,
@@ -370,13 +370,7 @@ const CourseDetail = () => {
             name: file_name,
             type: file_type,
             size: file_size,
-            completed: "true",
-            update_time: new Date().toISOString(),
-            course_name: course.title,
-            course_teacher: course.instructor,
-            look_times: "0",
-            download_times: "0",
-            score: "10",
+            completed: "true"
           }
         ]
       }, {
@@ -413,7 +407,6 @@ const CourseDetail = () => {
       });
       return;
     }
-
 
     toast({
       title: "作业发布成功",
@@ -529,9 +522,9 @@ const CourseDetail = () => {
     }, {
       headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
     });
-
+    
     const downloadurl = res.data.file_download_url;
-
+    
     // 在新标签页中打开下载链接
     window.open(downloadurl, '_blank');
   };
