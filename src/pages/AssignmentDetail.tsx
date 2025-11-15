@@ -84,6 +84,10 @@ const AssignmentDetail = () => {
         score: 95,
         feedback: "代码实现优秀，报告分析深入，建议在可视化部分增加更多图表。",
         file_url: "",
+        uuid: "",
+        assign_id: "",
+        user_id: "",
+        assign_description: "",
       },
     ],
   });
@@ -597,6 +601,22 @@ const AssignmentDetail = () => {
                       </div>
                       <Badge variant="secondary">{sub.date}</Badge>
                     </div>
+                  <div 
+                    onClick={() => navigate(`/grading-detail/${sub.uuid}`, { 
+                      state: {
+                        date: sub.date,
+                        file: sub.file,
+                        score: sub.score,
+                        feedback: sub.feedback,
+                        uuid: sub.uuid,
+                        assign_id: sub.assign_id,
+                        user_id: sub.user_id,
+                        file_url: sub.file_url,
+                        assign_description: sub.assign_description
+                      }
+                    })}
+                    className="cursor-pointer hover:bg-accent/50 transition-colors p-3 rounded-lg"
+                  >
                     <div className="flex items-center gap-2 mb-2">
                       <span className="text-sm text-muted-foreground">得分:</span>
                       <span className="text-lg font-bold text-green-600">{sub.score}</span>
@@ -606,15 +626,16 @@ const AssignmentDetail = () => {
                       <span className="font-medium">反馈: </span>
                       {sub.feedback}
                     </div>
-                    <Button
-                      onClick={() => handleOpenGrading(sub)}
-                      variant="outline"
-                      size="sm"
-                      className="w-full"
-                    >
-                      <Edit className="w-4 h-4 mr-2" />
-                      批改作业
-                    </Button>
+                  </div>
+                  <Button
+                    onClick={() => handleOpenGrading(sub)}
+                    variant="outline"
+                    size="sm"
+                    className="w-full"
+                  >
+                    <Edit className="w-4 h-4 mr-2" />
+                    批改作业
+                  </Button>
                   </div>
                 ))}
               </CardContent>
