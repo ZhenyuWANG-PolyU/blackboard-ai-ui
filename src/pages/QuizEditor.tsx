@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Plus, Trash2, GripVertical, Save } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, GripVertical, Save, Upload } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import axios from "axios";
 
@@ -32,6 +32,7 @@ const QuizEditor = () => {
   const [quizCourse, setQuizCourse] = useState(myquiz?.course || "人工智能基础");
   const [quizDuration, setQuizDuration] = useState(myquiz?.duration || "60");
   const [quizDescription, setQuizDescription] = useState(myquiz?.description || "");
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [questions, setQuestions] = useState<QuizQuestion[]>([
     {
       id: "1",
@@ -105,6 +106,17 @@ const QuizEditor = () => {
         title: "无法删除",
         description: "至少需要保留一道题目",
         variant: "destructive"
+      });
+    }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setSelectedFile(file);
+      toast({
+        title: "文件已选择",
+        description: `已选择文件: ${file.name}`
       });
     }
   };
@@ -260,6 +272,46 @@ const QuizEditor = () => {
               placeholder="请输入测验说明（可选）"
               rows={3}
             />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* AI出题 */}
+      <Card>
+        <CardHeader>
+          <CardTitle>AI出题</CardTitle>
+          <CardDescription>上传文件让AI自动生成测验题目</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="border-2 border-dashed rounded-lg p-8 text-center hover:border-primary/50 transition-colors">
+              <input
+                type="file"
+                id="ai-file-upload"
+                className="hidden"
+                onChange={handleFileChange}
+                accept=".pdf,.doc,.docx,.txt"
+              />
+              <label htmlFor="ai-file-upload" className="cursor-pointer">
+                <Upload className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                <p className="text-sm text-muted-foreground mb-2">
+                  {selectedFile ? (
+                    <span className="text-foreground font-medium">{selectedFile.name}</span>
+                  ) : (
+                    "点击上传文件或拖拽文件到此处"
+                  )}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  支持 PDF, DOC, DOCX, TXT 格式
+                </p>
+              </label>
+            </div>
+            {selectedFile && (
+              <Button className="w-full" variant="default">
+                <Upload className="h-4 w-4 mr-2" />
+                开始AI出题
+              </Button>
+            )}
           </div>
         </CardContent>
       </Card>
