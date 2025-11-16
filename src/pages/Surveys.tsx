@@ -9,59 +9,7 @@ import { useEffect, useState } from "react";
 const Surveys = () => {
   const navigate = useNavigate();
 
-  const [allSurveys, setAllSurveys] = useState([
-    {
-      id: "1",
-      title: "课程满意度调查",
-      course: "人工智能基础",
-      deadline: "2024-01-25",
-      questions: 12,
-      participants: 45,
-      status: "进行中",
-      urgent: true,
-      completed: false,
-    },
-    {
-      id: "2",
-      title: "教学质量反馈",
-      course: "数据结构",
-      deadline: "2024-01-28",
-      questions: 8,
-      participants: 32,
-      status: "进行中",
-      urgent: false,
-      completed: false,
-    },
-    {
-      id: "3",
-      title: "学习体验问卷",
-      course: "编程基础",
-      deadline: "2024-02-01",
-      questions: 10,
-      participants: 28,
-      status: "进行中",
-      urgent: false,
-      completed: false,
-    },
-    {
-      id: "4",
-      title: "期中课程评价",
-      course: "人工智能基础",
-      completedDate: "2024-01-10",
-      questions: 15,
-      participants: 58,
-      completed: true,
-    },
-    {
-      id: "5",
-      title: "实验课程反馈",
-      course: "算法设计",
-      completedDate: "2024-01-05",
-      questions: 10,
-      participants: 42,
-      completed: true,
-    },
-  ]);
+  const [allSurveys, setAllSurveys] = useState([]);
 
   async function fetchSurveys() {
     let res4 = await axios.post("/api/getcountsubmitsurveybyuserid", {}, {
