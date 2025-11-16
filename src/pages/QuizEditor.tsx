@@ -253,7 +253,7 @@ const QuizEditor = () => {
       // 更新当前题目
       if (aiRes.data.response) {
         const aiQuestion = aiRes.data.response;
-        setQuestions(questions.map(q => {
+        setQuestions(prevQuestions => prevQuestions.map(q => {
           if (q.id === questionId) {
             return {
               ...q,
