@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Plus, Trash2, GripVertical, Save } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, GripVertical, Save, Upload, Sparkles } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import axios from "axios";
 import { title } from "process";
@@ -35,6 +35,9 @@ const SurveyEditor = () => {
   const [surveyTitle, setSurveyTitle] = useState(surveyData?.title);
   const [surveyCourse, setSurveyCourse] = useState(surveyData?.course);
   const [surveyDescription, setSurveyDescription] = useState(surveyData?.description);
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [aiGenerateCount, setAiGenerateCount] = useState<number>(3);
+  const [isGenerating, setIsGenerating] = useState(false);
   const [questions, setQuestions] = useState<SurveyQuestion[]>([
     {
       id: "1",
@@ -52,9 +55,49 @@ const SurveyEditor = () => {
       type: "single",
       question: "",
       required: true,
-      options: ["选项1", "选项2", "选项3"]
+      options: ["选项1", "选项2", "选项3"],
+      uuid: ""
     };
     setQuestions([...questions, newQuestion]);
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setUploadedFile(file);
+      toast({
+        title: "文件已上传",
+        description: `已选择: ${file.name}`
+      });
+    }
+  };
+
+  const handleAIGenerate = async () => {
+    if (!uploadedFile) {
+      toast({
+        title: "请先上传文件",
+        description: "需要上传文件后才能使用AI生成功能",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsGenerating(true);
+    try {
+      // TODO: 调用AI生成API，传入文件和生成数量
+      toast({
+        title: "AI生成功能开发中",
+        description: `将生成 ${aiGenerateCount} 个问题`
+      });
+    } catch (error) {
+      toast({
+        title: "生成失败",
+        description: "AI生成问题时出错",
+        variant: "destructive"
+      });
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   const updateQuestion = (id: string, field: keyof SurveyQuestion, value: any) => {
@@ -289,6 +332,64 @@ const SurveyEditor = () => {
               rows={3}
             />
           </div>
+        </CardContent>
+      </Card>
+
+      {/* AI生成配置 */}
+      <Card>
+        <CardHeader>
+          <CardTitle>AI生成问题</CardTitle>
+          <CardDescription>上传文件，让AI帮你生成问卷问题</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="file-upload">上传文件</Label>
+            <div className="flex items-center gap-4">
+              <Input
+                id="file-upload"
+                type="file"
+                onChange={handleFileUpload}
+                accept=".pdf,.doc,.docx,.txt"
+                className="flex-1"
+              />
+              {uploadedFile && (
+                <Badge variant="secondary" className="gap-1">
+                  <Upload className="h-3 w-3" />
+                  {uploadedFile.name}
+                </Badge>
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              支持 PDF、Word、文本文件
+            </p>
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="generate-count">生成问题数量</Label>
+            <Select
+              value={aiGenerateCount.toString()}
+              onValueChange={(value) => setAiGenerateCount(parseInt(value))}
+            >
+              <SelectTrigger id="generate-count">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="1">1 个问题</SelectItem>
+                <SelectItem value="3">3 个问题</SelectItem>
+                <SelectItem value="5">5 个问题</SelectItem>
+                <SelectItem value="10">10 个问题</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <Button 
+            onClick={handleAIGenerate} 
+            className="w-full gap-2"
+            disabled={!uploadedFile || isGenerating}
+          >
+            <Sparkles className="h-4 w-4" />
+            {isGenerating ? "生成中..." : "AI生成问题"}
+          </Button>
         </CardContent>
       </Card>
 
