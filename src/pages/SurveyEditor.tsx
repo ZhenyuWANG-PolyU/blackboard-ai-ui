@@ -243,8 +243,8 @@ const SurveyEditor = () => {
     }, {
       headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
     });
-    console.log(res.data);
-    if (res.data.code === 20000) {
+    console.log("fetchSurveyData response:", res.data);
+    if (res.data.code === 20000 || res.data.code === "20000") {
       let qs = [];
       let num = 0;
       for (let i = 0; i < res.data.suverys.length; i++) {
@@ -258,7 +258,10 @@ const SurveyEditor = () => {
           uuid: q.uuid,
         });
       }
+      console.log("Setting questions:", qs);
       setQuestions(qs);
+    } else {
+      console.error("API返回code不是20000:", res.data.code);
     }
   }
 
