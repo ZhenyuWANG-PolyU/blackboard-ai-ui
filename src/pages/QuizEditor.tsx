@@ -252,15 +252,15 @@ const QuizEditor = () => {
       console.log(aiRes.data.response)
       // 更新当前题目
       if (aiRes.data.response) {
-        const aiQuestion = aiRes.data.response;
+        const aiQuestion = aiRes.data.response.question;
         setQuestions(prevQuestions => prevQuestions.map(q => {
           if (q.id === questionId) {
             return {
               ...q,
               question: aiQuestion.question || q.question,
               options: aiQuestion.options || q.options,
-              correctAnswer: aiQuestion.correct_answer?.toString() || q.correctAnswer,
-              q_score: aiQuestion.score?.toString() || q.q_score
+              correctAnswer: aiQuestion.correctAnswer,
+              q_score: aiQuestion.q_score?.toString() || q.q_score
             };
           }
           return q;
