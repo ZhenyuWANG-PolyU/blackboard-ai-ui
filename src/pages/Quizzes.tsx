@@ -97,6 +97,8 @@ const Quizzes = () => {
                           </div>
                           <span>•</span>
                           <span>{quiz.questions}题</span>
+                          <span>•</span>
+                          <span>总分: {quiz.score}</span>
                         </CardDescription>
                         <CardDescription className="flex items-center gap-2 text-sm mt-1">
                           <Clock className="w-3 h-3" />

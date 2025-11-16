@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -8,9 +8,12 @@ import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Clock, CheckCircle2, AlertCircle, Brain, Timer, Award } from "lucide-react";
+import axios from "axios";
 
 const QuizDetail = () => {
   const { quizId } = useParams();
+  const location = useLocation();
+  const myquiz = location.state;
   const navigate = useNavigate();
   const { toast } = useToast();
   const [currentQuestion, setCurrentQuestion] = useState(0);
@@ -18,13 +21,14 @@ const QuizDetail = () => {
   const [isSubmitted, setIsSubmitted] = useState(false);
 
   // 模拟测验数据
-  const quiz = {
-    id: quizId,
-    title: "机器学习算法测试",
-    course: "人工智能基础",
-    duration: "60分钟",
-    totalQuestions: 5,
-    passingScore: 60,
+  const [quiz, setQuiz] = useState({
+    id: myquiz.id,
+    title: myquiz.title,
+    course: myquiz.course,
+    duration: myquiz.duration,
+    totalQuestions: 1,
+    totalScore: myquiz.score,
+    passingScore: parseInt(myquiz.score) * 0.6,
     questions: [
       {
         id: 1,
@@ -36,53 +40,10 @@ const QuizDetail = () => {
           "深度学习的特殊情况"
         ],
         correctAnswer: 0,
-      },
-      {
-        id: 2,
-        question: "以下哪个不是常见的机器学习算法？",
-        options: [
-          "决策树",
-          "支持向量机",
-          "快速排序",
-          "随机森林"
-        ],
-        correctAnswer: 2,
-      },
-      {
-        id: 3,
-        question: "什么是过拟合？",
-        options: [
-          "模型在训练集上表现很好，但在测试集上表现很差",
-          "模型在训练集和测试集上都表现很差",
-          "模型训练时间过长",
-          "模型参数过多"
-        ],
-        correctAnswer: 0,
-      },
-      {
-        id: 4,
-        question: "神经网络中的激活函数有什么作用？",
-        options: [
-          "加速训练过程",
-          "引入非线性",
-          "减少参数数量",
-          "防止过拟合"
-        ],
-        correctAnswer: 1,
-      },
-      {
-        id: 5,
-        question: "什么是交叉验证？",
-        options: [
-          "一种数据预处理方法",
-          "一种特征选择方法",
-          "一种模型评估方法",
-          "一种优化算法"
-        ],
-        correctAnswer: 2,
+        score: 0,
       },
     ],
-  };
+  });
 
   const handleAnswerChange = (value: string) => {
     setAnswers({
@@ -160,9 +121,8 @@ const QuizDetail = () => {
         </Button>
 
         <div className="text-center space-y-4">
-          <div className={`w-24 h-24 mx-auto rounded-full bg-gradient-to-br ${
-            isPassed ? 'from-green-500 to-emerald-500' : 'from-orange-500 to-red-500'
-          } flex items-center justify-center`}>
+          <div className={`w-24 h-24 mx-auto rounded-full bg-gradient-to-br ${isPassed ? 'from-green-500 to-emerald-500' : 'from-orange-500 to-red-500'
+            } flex items-center justify-center`}>
             {isPassed ? (
               <Award className="w-12 h-12 text-white" />
             ) : (
@@ -206,14 +166,14 @@ const QuizDetail = () => {
             </div>
 
             <div className="flex gap-2 pt-4">
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 className="flex-1"
                 onClick={() => navigate("/quizzes")}
               >
                 返回列表
               </Button>
-              <Button 
+              <Button
                 className="flex-1 bg-gradient-to-r from-primary to-accent hover:opacity-90"
                 onClick={() => {
                   setIsSubmitted(false);
@@ -232,6 +192,36 @@ const QuizDetail = () => {
 
   const currentQ = quiz.questions[currentQuestion];
 
+  async function fetchQuizDetails() {
+    let res = await axios.post("/api/selectquizbyid", { quiz_id: myquiz.id },{
+      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+    });
+    console.log(res.data.quizzes);
+    let qs=[];
+    let num=0;
+    for(let i=0;i<res.data.quizzes.length;i++) {
+      let q=res.data.quizzes[i];
+      qs.push({
+        id:num.toString(),
+        question:q.q_question,
+        options:q.q_options,
+        correctAnswer:parseInt(q.correct_answer),
+        score:parseInt(q.score),
+      });
+      num++;
+    }
+    quiz.questions=qs;
+    quiz.totalQuestions=qs.length;
+    setQuiz({
+      ...quiz,
+      questions: qs,
+      totalQuestions: qs.length,
+    });
+  }
+
+  useEffect(() => {
+    // fetchQuizDetails();
+  }, []);
   return (
     <div className="space-y-6">
       <Button
@@ -345,8 +335,8 @@ const QuizDetail = () => {
                   index === currentQuestion
                     ? "default"
                     : answers[index] !== undefined
-                    ? "secondary"
-                    : "outline"
+                      ? "secondary"
+                      : "outline"
                 }
                 className="h-12"
                 onClick={() => setCurrentQuestion(index)}
