@@ -210,6 +210,76 @@ const QuizEditor = () => {
     })));
   }
 
+  async function aigenerateQuestions(questionId: string) {
+    console.log(questionId)
+    const question = questions.find(q => q.id === questionId);
+    console.log(question)
+    if (!question) return;
+
+    if (!selectedFile) {
+      toast({
+        title: "请先上传文件",
+        description: "需要上传文件才能使用AI生成题目",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    toast({
+      title: "AI生成中...",
+      description: "正在为您生成题目，请稍候"
+    });
+
+    try {
+      // 先上传文件
+      const uploadRes = await axios.post("/api/file_upload", {
+        file_name: selectedFile.name,
+        class_id: "",
+        user_id: "",
+        description: "AI出题文件"
+      }, {
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+      });
+
+      await axios.put(uploadRes.data.file_upload_url, selectedFile);
+
+      // 调用AI生成题目接口
+      const aiRes = await axios.post("/api/generate_single_question", {
+        url: uploadRes.data.file_name,
+      }, {
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+      });
+      console.log(aiRes.data.response)
+      // 更新当前题目
+      if (aiRes.data.response) {
+        const aiQuestion = aiRes.data.response;
+        setQuestions(questions.map(q => {
+          if (q.id === questionId) {
+            return {
+              ...q,
+              question: aiQuestion.question || q.question,
+              options: aiQuestion.options || q.options,
+              correctAnswer: aiQuestion.correct_answer?.toString() || q.correctAnswer,
+              q_score: aiQuestion.score?.toString() || q.q_score
+            };
+          }
+          return q;
+        }));
+        
+        toast({
+          title: "生成成功",
+          description: "AI已为您生成题目"
+        });
+      }
+    } catch (error) {
+      console.error("AI生成失败:", error);
+      toast({
+        title: "生成失败",
+        description: "AI生成题目失败，请重试",
+        variant: "destructive"
+      });
+    }
+  }
   useEffect(() => {
     fetchQuizDetails();
   }, []);
@@ -309,7 +379,7 @@ const QuizEditor = () => {
             {selectedFile && (
               <Button className="w-full" variant="default">
                 <Upload className="h-4 w-4 mr-2" />
-                开始AI出题
+                {selectedFile.name} 可以生成题目...
               </Button>
             )}
           </div>
@@ -336,10 +406,7 @@ const QuizEditor = () => {
                     variant="outline"
                     size="sm"
                     onClick={() => {
-                      toast({
-                        title: "AI生成",
-                        description: "AI生成功能开发中..."
-                      });
+                      aigenerateQuestions(question.id);
                     }}
                   >
                     <Sparkles className="h-4 w-4 mr-1" />
