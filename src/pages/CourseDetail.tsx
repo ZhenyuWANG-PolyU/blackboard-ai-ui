@@ -25,7 +25,8 @@ import {
   Upload,
   Edit2,
   Save,
-  X
+  X,
+  Sparkles
 } from "lucide-react";
 import axios from "axios";
 import { timeStamp } from "console";
@@ -579,8 +580,26 @@ const CourseDetail = () => {
       {/* 周次选择 */}
       <Card className="border-border/50">
         <CardHeader>
-          <CardTitle>选择周次</CardTitle>
-          <CardDescription>查看每周的学习内容</CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>选择周次</CardTitle>
+              <CardDescription>查看每周的学习内容</CardDescription>
+            </div>
+            {isTeacher && (
+              <Button
+                onClick={() => {
+                  toast({
+                    title: "AI生成教学计划",
+                    description: "该功能正在开发中...",
+                  });
+                }}
+                className="gap-2"
+              >
+                <Sparkles className="w-4 h-4" />
+                AI生成教学计划
+              </Button>
+            )}
+          </div>
         </CardHeader>
         <CardContent>
           <div className="flex flex-wrap gap-2">
