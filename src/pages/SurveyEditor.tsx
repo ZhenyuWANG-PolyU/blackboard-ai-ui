@@ -38,16 +38,7 @@ const SurveyEditor = () => {
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [aiGenerateCount, setAiGenerateCount] = useState<number>(3);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [questions, setQuestions] = useState<SurveyQuestion[]>([
-    {
-      id: "1",
-      type: "single",
-      question: "您对本课程的整体满意度如何？",
-      required: true,
-      options: ["非常满意", "满意", "一般", "不满意", "非常不满意"],
-      uuid: "",
-    }
-  ]);
+  const [questions, setQuestions] = useState<SurveyQuestion[]>([]);
 
   const addQuestion = () => {
     const newQuestion: SurveyQuestion = {
