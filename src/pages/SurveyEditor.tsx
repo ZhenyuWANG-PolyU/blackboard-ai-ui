@@ -13,7 +13,6 @@ import { Badge } from "@/components/ui/badge";
 import axios from "axios";
 import { title } from "process";
 import { randomUUID } from "crypto";
-import { url } from "inspector";
 
 type QuestionType = "single" | "multiple" | "text" | "rating";
 
@@ -85,70 +84,12 @@ const SurveyEditor = () => {
 
     setIsGenerating(true);
     try {
-      // 1. 获取预签名 URL
-      const uploadRes = await axios.post("/api/file_upload", {
-        file_name: uploadedFile.name,
-        class_id: "",
-        user_id: "",
-        description: ":AI生成问卷文件上传"
-      }, {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+      // TODO: 调用AI生成API，传入文件和生成数量
+      toast({
+        title: "AI生成功能开发中",
+        description: `将生成 ${aiGenerateCount} 个问题`
       });
-
-      console.log("文件上传响应:", uploadRes.data);
-
-      // 2. 上传文件到 R2
-      await axios.put(uploadRes.data.file_upload_url, uploadedFile, {
-        headers: {
-          'Content-Type': uploadedFile.type
-        }
-      });
-
-      const fileUrl = uploadRes.data.file_name;
-      console.log("文件 URL:", fileUrl);
-
-      let res3 = await axios.post("/api/generate_survey",{
-        url: fileUrl,
-        question_count: aiGenerateCount.toString()
-      })
-      console.log("AI生成响应:", res3.data.response.suverys);
-      
-      // 将AI生成的问题添加到问题列表
-      if (res3.data.response && res3.data.response.suverys) {
-        let aiQuestions = [];
-        let num = questions.length;
-        for (let i = 0; i < res3.data.response.suverys.length; i++) {
-          let aiQ = res3.data.response.suverys[i];
-          aiQuestions.push({
-            id: (num++).toString(),
-            type: "single" as QuestionType,
-            question: aiQ.q_question,
-            required: true,
-            options: aiQ.q_options,
-            uuid: "",
-            suvery_id:surveyData.id,
-            suvery_name: surveyTitle,
-            suvery_time: "2025-11-16",
-            suvery_score: "0",
-            suvery_status: "未完成",
-            suvery_question_number: aiGenerateCount.toString(),
-          });
-        }
-        setQuestions(aiQuestions);
-        
-        toast({
-          title: "AI生成成功",
-          description: `已成功生成 ${aiQuestions.length} 个问题`
-        });
-      } else {
-        toast({
-          title: "生成失败",
-          description: "AI返回数据格式错误",
-          variant: "destructive"
-        });
-      }
     } catch (error) {
-      console.error("生成失败:", error);
       toast({
         title: "生成失败",
         description: "AI生成问题时出错",
@@ -265,21 +206,21 @@ const SurveyEditor = () => {
       });
       return;
     }
-    let sur = []
-    for (let q of questions) {
+    let sur=[]
+    for (let q of questions){
       sur.push({
-        uuid: q.uuid ? q.uuid : "",
-        suvery_id: surveyData.id,
-        suvery_name: surveyTitle,
-        suvery_time: "2025-11-16",
-        suvery_score: "0",
-        suvery_status: "未完成",
-        suvery_question_number: "",
-        q_question: q.question,
-        q_options: q.options,
-        q_correct_answer: "",
-        q_type: "single",
-        q_score: "10"
+        uuid:q.uuid ? q.uuid : "",
+        suvery_id:surveyData.id,
+        suvery_name:surveyTitle,
+        suvery_time:"2025-11-16",
+        suvery_score:"0",
+        suvery_status:"未完成",
+        suvery_question_number:"",
+        q_question:q.question,
+        q_options:q.options,
+        q_correct_answer:"",
+        q_type:"single",
+        q_score:"10"
       })
     }
     console.log(sur)
@@ -287,7 +228,7 @@ const SurveyEditor = () => {
       id: surveyData.id,
       name: surveyTitle,
       course: surveyCourse,
-      description: surveyDescription ? surveyDescription : "",
+      description: surveyDescription,
       course_id: surveyData.course_id,
       course_name: surveyData.course,
       teacher_name: surveyData.teacher_name,
@@ -306,39 +247,27 @@ const SurveyEditor = () => {
   };
 
   async function fetchSurveyData() {
-    console.log(surveyData.id)
-    try {
-      let res = await axios.post("/api/get_suvery_q_by_suvery_id", {
-        survey_id: surveyData.id
-      }, {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
-      });
-      console.log(res.data);
-      if (res.data.code === 20000 && res.data.suverys && res.data.suverys.length > 0) {
-        let qs = [];
-        let num = 0;
-        for (let i = 0; i < res.data.suverys.length; i++) {
-          let q = res.data.suverys[i];
-          qs.push({
-            id: (num++).toString(),
-            type: "single",
-            question: q.q_question,
-            required: true,
-            options: q.q_options,
-            uuid: q.uuid,
-          });
-        }
-        setQuestions(qs);
-      } else {
-        console.log("没有找到问卷问题或返回数据为空");
+    let res = await axios.post("/api/get_suvery_q_by_suvery_id", {
+      survey_id: surveyData.id
+    }, {
+      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+    });
+    console.log(res.data);
+    if (res.data.code === 20000) {
+      let qs = [];
+      let num = 0;
+      for (let i = 0; i < res.data.suverys.length; i++) {
+        let q = res.data.suverys[i];
+        qs.push({
+          id: (num++).toString(),
+          type: "single",
+          question: q.q_question,
+          required: true,
+          options: q.q_options,
+          uuid: q.uuid,
+        });
       }
-    } catch (error) {
-      console.error("获取问卷问题失败:", error);
-      toast({
-        title: "加载失败",
-        description: "无法加载问卷问题，请检查网络连接",
-        variant: "destructive"
-      });
+      setQuestions(qs);
     }
   }
 
@@ -434,7 +363,7 @@ const SurveyEditor = () => {
               支持 PDF、Word、文本文件
             </p>
           </div>
-
+          
           <div className="space-y-2">
             <Label htmlFor="generate-count">生成问题数量</Label>
             <Select
@@ -453,8 +382,8 @@ const SurveyEditor = () => {
             </Select>
           </div>
 
-          <Button
-            onClick={handleAIGenerate}
+          <Button 
+            onClick={handleAIGenerate} 
             className="w-full gap-2"
             disabled={!uploadedFile || isGenerating}
           >
