@@ -15,8 +15,10 @@ import Assignments from "./pages/Assignments";
 import AssignmentDetail from "./pages/AssignmentDetail";
 import Quizzes from "./pages/Quizzes";
 import QuizDetail from "./pages/QuizDetail";
+import QuizEditor from "./pages/QuizEditor";
 import Surveys from "./pages/Surveys";
 import SurveyDetail from "./pages/SurveyDetail";
+import SurveyEditor from "./pages/SurveyEditor";
 import Statistics from "./pages/Statistics";
 import AIAssistant from "./pages/AIAssistant";
 import Profile from "./pages/Profile";
@@ -46,8 +48,10 @@ const App = () => (
             <Route path="/grading-detail/:submissionId" element={<GradingDetail />} />
             <Route path="/quizzes" element={<Quizzes />} />
             <Route path="/quizzes/:quizId" element={<QuizDetail />} />
+            <Route path="/quiz-editor/:quizId" element={<QuizEditor />} />
             <Route path="/surveys" element={<Surveys />} />
             <Route path="/surveys/:surveyId" element={<SurveyDetail />} />
+            <Route path="/survey-editor/:surveyId" element={<SurveyEditor />} />
             <Route path="/statistics" element={<Statistics />} />
             <Route path="/ai-assistant" element={<AIAssistant />} />
             <Route path="/profile" element={<Profile />} />

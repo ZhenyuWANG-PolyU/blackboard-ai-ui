@@ -1,0 +1,362 @@
+import { useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { useToast } from "@/hooks/use-toast";
+import { ArrowLeft, Plus, Trash2, GripVertical, Save } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+
+type QuestionType = "single" | "multiple" | "text" | "rating";
+
+interface SurveyQuestion {
+  id: string;
+  type: QuestionType;
+  question: string;
+  required: boolean;
+  options?: string[];
+}
+
+const SurveyEditor = () => {
+  const navigate = useNavigate();
+  const { surveyId } = useParams();
+  const { toast } = useToast();
+
+  const [surveyTitle, setSurveyTitle] = useState("课程满意度调查");
+  const [surveyCourse, setSurveyCourse] = useState("人工智能基础");
+  const [surveyDescription, setSurveyDescription] = useState("请您抽出几分钟时间填写本问卷，您的反馈对我们改进教学质量非常重要。");
+  const [questions, setQuestions] = useState<SurveyQuestion[]>([
+    {
+      id: "1",
+      type: "single",
+      question: "您对本课程的整体满意度如何？",
+      required: true,
+      options: ["非常满意", "满意", "一般", "不满意", "非常不满意"]
+    }
+  ]);
+
+  const addQuestion = () => {
+    const newQuestion: SurveyQuestion = {
+      id: Date.now().toString(),
+      type: "single",
+      question: "",
+      required: true,
+      options: ["选项1", "选项2", "选项3"]
+    };
+    setQuestions([...questions, newQuestion]);
+  };
+
+  const updateQuestion = (id: string, field: keyof SurveyQuestion, value: any) => {
+    setQuestions(questions.map(q => {
+      if (q.id === id) {
+        // 如果改变题型，需要处理options
+        if (field === "type") {
+          if (value === "text") {
+            return { ...q, [field]: value, options: undefined };
+          } else if (value === "rating") {
+            return { ...q, [field]: value, options: ["1", "2", "3", "4", "5"] };
+          } else if (!q.options) {
+            return { ...q, [field]: value, options: ["选项1", "选项2", "选项3"] };
+          }
+        }
+        return { ...q, [field]: value };
+      }
+      return q;
+    }));
+  };
+
+  const updateOption = (questionId: string, optionIndex: number, value: string) => {
+    setQuestions(questions.map(q => {
+      if (q.id === questionId && q.options) {
+        const newOptions = [...q.options];
+        newOptions[optionIndex] = value;
+        return { ...q, options: newOptions };
+      }
+      return q;
+    }));
+  };
+
+  const addOption = (questionId: string) => {
+    setQuestions(questions.map(q => {
+      if (q.id === questionId && q.options) {
+        return { ...q, options: [...q.options, `选项${q.options.length + 1}`] };
+      }
+      return q;
+    }));
+  };
+
+  const removeOption = (questionId: string, optionIndex: number) => {
+    setQuestions(questions.map(q => {
+      if (q.id === questionId && q.options && q.options.length > 2) {
+        const newOptions = q.options.filter((_, i) => i !== optionIndex);
+        return { ...q, options: newOptions };
+      }
+      return q;
+    }));
+  };
+
+  const deleteQuestion = (id: string) => {
+    if (questions.length > 1) {
+      setQuestions(questions.filter(q => q.id !== id));
+    } else {
+      toast({
+        title: "无法删除",
+        description: "至少需要保留一个问题",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleSave = () => {
+    const hasEmptyQuestion = questions.some(q => !q.question.trim());
+    const hasEmptyOption = questions.some(q => 
+      q.options && q.options.some(opt => !opt.trim())
+    );
+
+    if (!surveyTitle.trim()) {
+      toast({
+        title: "保存失败",
+        description: "请填写问卷标题",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (hasEmptyQuestion) {
+      toast({
+        title: "保存失败",
+        description: "请完善所有问题内容",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (hasEmptyOption) {
+      toast({
+        title: "保存失败",
+        description: "请完善所有选项内容",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // TODO: 调用API保存数据
+    toast({
+      title: "保存成功",
+      description: "问卷已成功保存"
+    });
+    navigate("/surveys");
+  };
+
+  const getQuestionTypeLabel = (type: QuestionType) => {
+    const labels: Record<QuestionType, string> = {
+      single: "单选题",
+      multiple: "多选题",
+      text: "问答题",
+      rating: "评分题"
+    };
+    return labels[type];
+  };
+
+  return (
+    <div className="space-y-6 pb-16">
+      <div className="flex items-center gap-4">
+        <Button variant="ghost" size="icon" onClick={() => navigate("/surveys")}>
+          <ArrowLeft className="h-5 w-5" />
+        </Button>
+        <div>
+          <h1 className="text-3xl font-bold text-foreground">编辑问卷</h1>
+          <p className="text-muted-foreground">添加和编辑问卷问题</p>
+        </div>
+      </div>
+
+      {/* 问卷基本信息 */}
+      <Card>
+        <CardHeader>
+          <CardTitle>基本信息</CardTitle>
+          <CardDescription>设置问卷的基本信息</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="title">问卷标题</Label>
+            <Input
+              id="title"
+              value={surveyTitle}
+              onChange={(e) => setSurveyTitle(e.target.value)}
+              placeholder="请输入问卷标题"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="course">所属课程</Label>
+            <Input
+              id="course"
+              value={surveyCourse}
+              onChange={(e) => setSurveyCourse(e.target.value)}
+              placeholder="请输入课程名称"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="description">问卷说明</Label>
+            <Textarea
+              id="description"
+              value={surveyDescription}
+              onChange={(e) => setSurveyDescription(e.target.value)}
+              placeholder="请输入问卷说明"
+              rows={3}
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* 问题列表 */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-xl font-semibold">问题列表</h2>
+          <Badge variant="secondary">{questions.length} 个问题</Badge>
+        </div>
+
+        {questions.map((question, qIndex) => (
+          <Card key={question.id} className="relative">
+            <CardHeader>
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex items-center gap-2 flex-1">
+                  <GripVertical className="h-5 w-5 text-muted-foreground cursor-move" />
+                  <span className="font-semibold text-lg">问题 {qIndex + 1}</span>
+                  {question.required && (
+                    <Badge variant="destructive" className="text-xs">必答</Badge>
+                  )}
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => deleteQuestion(question.id)}
+                  className="text-destructive hover:text-destructive"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>问题类型</Label>
+                  <Select
+                    value={question.type}
+                    onValueChange={(value: QuestionType) => 
+                      updateQuestion(question.id, "type", value)
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="single">单选题</SelectItem>
+                      <SelectItem value="multiple">多选题</SelectItem>
+                      <SelectItem value="text">问答题</SelectItem>
+                      <SelectItem value="rating">评分题</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>是否必答</Label>
+                  <div className="flex items-center h-10 gap-2">
+                    <Switch
+                      checked={question.required}
+                      onCheckedChange={(checked) => 
+                        updateQuestion(question.id, "required", checked)
+                      }
+                    />
+                    <span className="text-sm text-muted-foreground">
+                      {question.required ? "必答" : "选答"}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label>问题内容</Label>
+                <Textarea
+                  value={question.question}
+                  onChange={(e) => updateQuestion(question.id, "question", e.target.value)}
+                  placeholder="请输入问题内容"
+                  rows={2}
+                />
+              </div>
+
+              {question.type !== "text" && question.options && (
+                <div className="space-y-3">
+                  <Label>
+                    {question.type === "rating" ? "评分选项" : "选项"}
+                  </Label>
+                  {question.options.map((option, optIndex) => (
+                    <div key={optIndex} className="flex items-center gap-2">
+                      <span className="text-sm text-muted-foreground w-8">
+                        {question.type === "rating" ? `${optIndex + 1}分` : `${optIndex + 1}.`}
+                      </span>
+                      <Input
+                        value={option}
+                        onChange={(e) => updateOption(question.id, optIndex, e.target.value)}
+                        placeholder={`选项 ${optIndex + 1}`}
+                        className="flex-1"
+                        disabled={question.type === "rating"}
+                      />
+                      {question.type !== "rating" && question.options!.length > 2 && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => removeOption(question.id, optIndex)}
+                          className="text-muted-foreground hover:text-destructive"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                  ))}
+                  {question.type !== "rating" && question.options.length < 10 && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => addOption(question.id)}
+                      className="w-full"
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      添加选项
+                    </Button>
+                  )}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        ))}
+
+        <Button
+          variant="outline"
+          className="w-full h-20 border-dashed"
+          onClick={addQuestion}
+        >
+          <Plus className="h-5 w-5 mr-2" />
+          添加新问题
+        </Button>
+      </div>
+
+      {/* 底部操作栏 */}
+      <div className="fixed bottom-0 left-0 right-0 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 p-4 z-50">
+        <div className="container max-w-4xl mx-auto flex justify-between items-center gap-4">
+          <Button variant="outline" onClick={() => navigate("/surveys")}>
+            取消
+          </Button>
+          <Button onClick={handleSave} className="gap-2">
+            <Save className="h-4 w-4" />
+            保存问卷
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default SurveyEditor;

@@ -2,7 +2,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ClipboardList, Clock, CheckCircle2, Users } from "lucide-react";
+import { ClipboardList, Clock, CheckCircle2, Users, Edit } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 const Surveys = () => {
@@ -72,12 +72,14 @@ const Surveys = () => {
           {availableSurveys.map((survey, index) => (
             <Card 
               key={index} 
-              className="border-border/50 hover:shadow-md transition-all duration-200 cursor-pointer"
-              onClick={() => navigate(`/surveys/${index + 1}`)}
+              className="border-border/50 hover:shadow-md transition-all duration-200"
             >
               <CardHeader>
                 <div className="flex items-start justify-between">
-                  <div className="flex items-start gap-4 flex-1">
+                  <div 
+                    className="flex items-start gap-4 flex-1 cursor-pointer"
+                    onClick={() => navigate(`/surveys/${index + 1}`)}
+                  >
                     <div className={`w-12 h-12 rounded-lg bg-gradient-to-br ${
                       survey.urgent ? 'from-orange-500 to-red-500' : 'from-primary to-accent'
                     } flex items-center justify-center flex-shrink-0`}>
@@ -103,9 +105,22 @@ const Surveys = () => {
                       </CardDescription>
                     </div>
                   </div>
-                  <Badge variant={survey.urgent ? "destructive" : "secondary"}>
-                    {survey.status}
-                  </Badge>
+                  <div className="flex items-start gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(`/survey-editor/${index + 1}`);
+                      }}
+                    >
+                      <Edit className="h-4 w-4 mr-2" />
+                      编辑
+                    </Button>
+                    <Badge variant={survey.urgent ? "destructive" : "secondary"}>
+                      {survey.status}
+                    </Badge>
+                  </div>
                 </div>
               </CardHeader>
               <CardContent>

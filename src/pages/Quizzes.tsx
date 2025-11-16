@@ -2,7 +2,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Brain, Clock, CheckCircle2, Timer } from "lucide-react";
+import { Brain, Clock, CheckCircle2, Timer, Edit } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 const Quizzes = () => {
@@ -74,12 +74,14 @@ const Quizzes = () => {
           {availableQuizzes.map((quiz, index) => (
             <Card 
               key={index} 
-              className="border-border/50 hover:shadow-md transition-all duration-200 cursor-pointer"
-              onClick={() => navigate(`/quizzes/${index + 1}`)}
+              className="border-border/50 hover:shadow-md transition-all duration-200"
             >
               <CardHeader>
                 <div className="flex items-start justify-between">
-                  <div className="flex items-start gap-4 flex-1">
+                  <div 
+                    className="flex items-start gap-4 flex-1 cursor-pointer"
+                    onClick={() => navigate(`/quizzes/${index + 1}`)}
+                  >
                     <div className={`w-12 h-12 rounded-lg bg-gradient-to-br ${
                       quiz.urgent ? 'from-red-500 to-orange-500' : 'from-primary to-accent'
                     } flex items-center justify-center flex-shrink-0`}>
@@ -105,9 +107,22 @@ const Quizzes = () => {
                       </CardDescription>
                     </div>
                   </div>
-                  <Badge variant={quiz.urgent ? "destructive" : "secondary"}>
-                    {quiz.status}
-                  </Badge>
+                  <div className="flex items-start gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(`/quiz-editor/${index + 1}`);
+                      }}
+                    >
+                      <Edit className="h-4 w-4 mr-2" />
+                      编辑
+                    </Button>
+                    <Badge variant={quiz.urgent ? "destructive" : "secondary"}>
+                      {quiz.status}
+                    </Badge>
+                  </div>
                 </div>
               </CardHeader>
               <CardContent>
