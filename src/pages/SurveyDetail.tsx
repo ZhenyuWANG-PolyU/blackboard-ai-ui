@@ -32,7 +32,7 @@ const SurveyDetail = () => {
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState<Record<number, string | string[]>>({});
   const [isSubmitted, setIsSubmitted] = useState(false);
-  
+
   const [survey, setSurvey] = useState({
     id: surveyData.id,
     title: surveyData.title,
@@ -74,7 +74,7 @@ const SurveyDetail = () => {
         });
       }
       console.log("Setting questions:", qs);
-      
+
       setSurvey(prev => ({
         ...prev,
         questions: qs,
@@ -141,7 +141,21 @@ const SurveyDetail = () => {
   };
 
   async function handleSubmit() {
+    const now = new Date();
+    const finishTime = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
     
+    let res2 = await axios.post("/api/insert_activity_date", {
+      start_time: surveyData.start_date,
+      end_time: surveyData.deadline,
+      finish_time: finishTime,
+      activity_id: surveyData.id,
+      user_id: localStorage.getItem("user_id"),
+      user_id_activity_id: localStorage.getItem("user_id") + "_" + surveyData.id
+    }, {
+      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+    })
+    console.log(res2.data);
+
     const requiredQuestions = survey.questions.filter((q) => q.required);
     const answeredRequired = requiredQuestions.every((q) => {
       const index = survey.questions.indexOf(q);

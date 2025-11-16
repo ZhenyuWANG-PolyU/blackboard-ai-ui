@@ -104,12 +104,12 @@ const SurveyEditor = () => {
       const fileUrl = uploadRes.data.file_name;
       console.log("文件 URL:", fileUrl);
 
-      let res3 = await axios.post("/api/generate_survey",{
+      let res3 = await axios.post("/api/generate_survey", {
         url: fileUrl,
         question_count: aiGenerateCount.toString()
       })
       console.log("AI生成响应:", res3.data.response.suverys);
-      
+
       // 将AI生成的问题添加到问题列表
       if (res3.data.response && res3.data.response.suverys) {
         let aiQuestions = [];
@@ -123,7 +123,7 @@ const SurveyEditor = () => {
             required: true,
             options: aiQ.q_options,
             uuid: "",
-            suvery_id:surveyData.id,
+            suvery_id: surveyData.id,
             suvery_name: surveyTitle,
             suvery_time: "2025-11-16",
             suvery_score: "0",
@@ -134,10 +134,10 @@ const SurveyEditor = () => {
         setQuestions(aiQuestions);
         let res4 = await axios.post("/api/delete_suvery_q_by_suvery_id", {
           survey_id: surveyData.id
-        },{
+        }, {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
         })
-        
+
         toast({
           title: "AI生成成功",
           description: `已成功生成 ${aiQuestions.length} 个问题`
@@ -223,6 +223,19 @@ const SurveyEditor = () => {
   };
 
   async function handleSave() {
+    let res3 = await axios.post("/api/update_activity_date", {
+      start_time: startDate ? format(startDate, "yyyy-MM-dd HH:mm:ss") : "",
+      end_time: endDate ? format(endDate, "yyyy-MM-dd HH:mm:ss") : "",
+      finish_time: "",
+      activity_id: surveyData.id,
+      user_id: "",
+      user_id_activity_id: ""
+    }, {
+      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+    })
+    console.log(res3.data);
+
+
     let s = {
       id: surveyData.id,
       name: surveyTitle,
@@ -297,7 +310,7 @@ const SurveyEditor = () => {
     }, {
       headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
     })
-    
+
     console.log(res2.data);
     // TODO: 调用API保存数据
     // console.log(questions)
@@ -337,6 +350,8 @@ const SurveyEditor = () => {
   }
 
   useEffect(() => {
+    setStartDate(surveyData.start_date ? new Date(surveyData.start_date) : undefined);
+    setEndDate(surveyData.deadline ? new Date(surveyData.deadline) : undefined);
     fetchSurveyData();
   }, []);
 

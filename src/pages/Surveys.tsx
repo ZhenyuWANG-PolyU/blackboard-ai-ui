@@ -17,6 +17,19 @@ const Surveys = () => {
   const [analyzingSurveyId, setAnalyzingSurveyId] = useState<string | null>(null);
 
   async function fetchSurveys() {
+    let res6 = await axios.post("/api/select_activity_date_by_user_id", {}, {
+      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+    })
+    // console.log(res6.data.activity_finish_times);
+    let finishTimes = res6.data.activity_finish_times;
+
+
+    let res5 = await axios.post("/api/get_all_time_group_by_activity_id", {}, {
+      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+    })
+    let activityTimes = res5.data.activity_times;
+    // console.log(res5.data.activity_times);
+
     let res4 = await axios.post("/api/getcountsubmitsurveybyuserid", {}, {
       headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
     })
@@ -51,15 +64,36 @@ const Surveys = () => {
       let userSubmitCount = userSubmitObj ? userSubmitObj.submit_count : 0;
       let isCompleted = userSubmitCount > 0;
 
+      // 从活动时间中找到对应的记录
+      let activityTimeObj = activityTimes.find((a: any) => a.activity_id === survey.id);
+      let startDate = activityTimeObj ? String(activityTimeObj.start_time).split(' ')[0] : "";
+      let endDate = activityTimeObj ? String(activityTimeObj.end_time).split(' ')[0] : "";
+
+      // 计算是否紧急：截止日期距离今天小于5天或已超时
+      let isUrgent = false;
+      if (endDate) {
+        const today = new Date();
+        const deadline = new Date(endDate);
+        const diffTime = deadline.getTime() - today.getTime();
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        isUrgent = diffDays <= 5;
+      }
+
+      // 从完成时间数组中找到对应的记录
+      let finishTimeObj = finishTimes.find((f: any) => f.activity_id === survey.id);
+      let completedDate = finishTimeObj ? finishTimeObj.finish_time : "";
+
       fetchedSurveys.push({
         title: survey.name,
         course: survey.course_name,
-        deadline: "2025-12-01",
+        start_date: startDate,
+        deadline: endDate,
         questions: (numbers[survey.id] || 0).toString(),
         participants: participantCount.toString(),
         status: survey.status || "已完成",
-        urgent: false,
+        urgent: isUrgent,
         completed: isCompleted,
+        completedDate: completedDate,
         id: survey.id,
         description: survey.description,
         course_id: survey.course_id,
@@ -139,6 +173,15 @@ const Surveys = () => {
                           <span>{survey.participants}人参与</span>
                           <span>•</span>
                           <span>{survey.questions}个问题</span>
+                        </CardDescription><CardDescription className="flex items-center gap-2 text-sm mt-1">
+                          <Clock className="w-3 h-3" />
+                          <span>
+                            开始: {survey.start_date}
+                          </span>
+                          <span>•</span>
+                          <span className={survey.urgent ? 'text-destructive font-medium' : ''}>
+                            截止: {survey.deadline}
+                          </span>
                         </CardDescription>
                       </>
                     ) : (
@@ -155,6 +198,10 @@ const Surveys = () => {
                         </CardDescription>
                         <CardDescription className="flex items-center gap-2 text-sm mt-1">
                           <Clock className="w-3 h-3" />
+                          <span>
+                            开始: {survey.start_date}
+                          </span>
+                          <span>•</span>
                           <span className={survey.urgent ? 'text-destructive font-medium' : ''}>
                             截止: {survey.deadline}
                           </span>
