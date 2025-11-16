@@ -147,7 +147,7 @@ const QuizEditor = () => {
         quiz_id: myquiz.id,
         quiz_name: myquiz.title,
         quiz_time: myquiz.duration,
-        quiz_score: myquiz.score,
+        quiz_score: myquiz.score.toString(),
         quiz_status: myquiz.status,
         quiz_question_number: myquiz.questions,
         q_question: q.question,
@@ -157,11 +157,13 @@ const QuizEditor = () => {
         q_score: q.q_score
       })
     }
+    console.log(quizs);
+    console.log(myquiz);
     let res = await axios.post("/api/updatequizq", {
       id: myquiz.id,
       name: myquiz.title,
       time: myquiz.duration,
-      score: myquiz.score,
+      score: myquiz.score.toString(),
       status: myquiz.status,
       description: myquiz.description,
       questions_number: myquiz.questions,
