@@ -82,13 +82,17 @@ const QuizDetail = () => {
   };
 
   const calculateScore = () => {
-    let correct = 0;
+    let totalScore = 0;
     quiz.questions.forEach((q, index) => {
-      if (parseInt(answers[index]) === q.correctAnswer) {
-        correct++;
+      const userAnswer = parseInt(answers[index]);
+      const correctAnswer = q.correctAnswer;
+      console.log(`题目${index + 1}: 用户答案=${userAnswer}, 正确答案=${correctAnswer}, 匹配=${userAnswer === correctAnswer}`);
+      if (userAnswer === correctAnswer) {
+        totalScore += q.score;
       }
     });
-    return Math.round((correct / quiz.totalQuestions) * 100);
+    console.log(`总分: ${totalScore}`);
+    return totalScore;
   };
 
   const getCorrectCount = () => {
@@ -209,8 +213,8 @@ const QuizDetail = () => {
         id:num.toString(),
         question:q.q_question,
         options:q.q_options,
-        correctAnswer:parseInt(q.correct_answer),
-        score:parseInt(q.score),
+        correctAnswer:parseInt(q.q_correct_answer),
+        score:parseInt(q.q_score),
       });
       num++;
     }
