@@ -1,7 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ClipboardList, Clock, CheckCircle2, Users, Edit } from "lucide-react";
+import { ClipboardList, Clock, CheckCircle2, Users, Edit, Sparkles } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { useEffect, useState } from "react";
@@ -140,17 +140,31 @@ const Surveys = () => {
                 </div>
                 <div className="flex items-start gap-2">
                   {(
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        navigate(`/survey-editor/${survey.id}`, { state: survey });
-                      }}
-                    >
-                      <Edit className="h-4 w-4 mr-2" />
-                      编辑
-                    </Button>
+                    <>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/survey-editor/${survey.id}`, { state: survey });
+                        }}
+                      >
+                        <Edit className="h-4 w-4 mr-2" />
+                        编辑
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          // TODO: 实现AI分析功能
+                          console.log("AI分析问卷:", survey.id);
+                        }}
+                      >
+                        <Sparkles className="h-4 w-4 mr-2" />
+                        AI分析
+                      </Button>
+                    </>
                   )}
                   {survey.completed ? (
                     <Badge variant="secondary">已提交</Badge>
