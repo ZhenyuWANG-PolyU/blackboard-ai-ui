@@ -307,27 +307,38 @@ const SurveyEditor = () => {
 
   async function fetchSurveyData() {
     console.log(surveyData.id)
-    let res = await axios.post("/api/get_suvery_q_by_suvery_id", {
-      survey_id: surveyData.id
-    }, {
-      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
-    });
-    console.log(res.data);
-    if (res.data.code === 20000) {
-      let qs = [];
-      let num = 0;
-      for (let i = 0; i < res.data.suverys.length; i++) {
-        let q = res.data.suverys[i];
-        qs.push({
-          id: (num++).toString(),
-          type: "single",
-          question: q.q_question,
-          required: true,
-          options: q.q_options,
-          uuid: q.uuid,
-        });
+    try {
+      let res = await axios.post("/api/get_suvery_q_by_suvery_id", {
+        survey_id: surveyData.id
+      }, {
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+      });
+      console.log(res.data);
+      if (res.data.code === 20000 && res.data.suverys && res.data.suverys.length > 0) {
+        let qs = [];
+        let num = 0;
+        for (let i = 0; i < res.data.suverys.length; i++) {
+          let q = res.data.suverys[i];
+          qs.push({
+            id: (num++).toString(),
+            type: "single",
+            question: q.q_question,
+            required: true,
+            options: q.q_options,
+            uuid: q.uuid,
+          });
+        }
+        setQuestions(qs);
+      } else {
+        console.log("没有找到问卷问题或返回数据为空");
       }
-      setQuestions(qs);
+    } catch (error) {
+      console.error("获取问卷问题失败:", error);
+      toast({
+        title: "加载失败",
+        description: "无法加载问卷问题，请检查网络连接",
+        variant: "destructive"
+      });
     }
   }
 
