@@ -29,6 +29,7 @@ import {
 } from "lucide-react";
 import axios from "axios";
 import { timeStamp } from "console";
+import { Description } from "@radix-ui/react-toast";
 
 const CourseDetail = () => {
   const { courseId } = useParams();
@@ -543,6 +544,7 @@ const CourseDetail = () => {
     let thissurvey = {
       id: (new Date()).valueOf().toString(),
       name: surveyForm.name.toString(),
+      description: surveyForm.description.toString(),
       status: "未完成",
     }
     const res2 = await axios.post("/api/updatesurveys", {

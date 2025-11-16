@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,10 +10,14 @@ import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Plus, Trash2, GripVertical, Save } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import axios from "axios";
+import { title } from "process";
+import { randomUUID } from "crypto";
 
 type QuestionType = "single" | "multiple" | "text" | "rating";
 
 interface SurveyQuestion {
+  uuid: any;
   id: string;
   type: QuestionType;
   question: string;
@@ -24,18 +28,21 @@ interface SurveyQuestion {
 const SurveyEditor = () => {
   const navigate = useNavigate();
   const { surveyId } = useParams();
+  const location = useLocation();
+  const surveyData = location.state;
   const { toast } = useToast();
-
-  const [surveyTitle, setSurveyTitle] = useState("课程满意度调查");
-  const [surveyCourse, setSurveyCourse] = useState("人工智能基础");
-  const [surveyDescription, setSurveyDescription] = useState("请您抽出几分钟时间填写本问卷，您的反馈对我们改进教学质量非常重要。");
+  console.log(surveyData)
+  const [surveyTitle, setSurveyTitle] = useState(surveyData?.title);
+  const [surveyCourse, setSurveyCourse] = useState(surveyData?.course);
+  const [surveyDescription, setSurveyDescription] = useState(surveyData?.description);
   const [questions, setQuestions] = useState<SurveyQuestion[]>([
     {
       id: "1",
       type: "single",
       question: "您对本课程的整体满意度如何？",
       required: true,
-      options: ["非常满意", "满意", "一般", "不满意", "非常不满意"]
+      options: ["非常满意", "满意", "一般", "不满意", "非常不满意"],
+      uuid: "",
     }
   ]);
 
@@ -111,9 +118,22 @@ const SurveyEditor = () => {
     }
   };
 
-  const handleSave = () => {
+  async function handleSave() {
+    let s = {
+      id: surveyData.id,
+      name: surveyTitle,
+      course: surveyCourse,
+      description: surveyDescription,
+    }
+    let res = await axios.post("/api/updatesurveybyid", {
+      course_week_id: "",
+      surveys: [s]
+    }, {
+      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+    })
+    console.log(res.data);
     const hasEmptyQuestion = questions.some(q => !q.question.trim());
-    const hasEmptyOption = questions.some(q => 
+    const hasEmptyOption = questions.some(q =>
       q.options && q.options.some(opt => !opt.trim())
     );
 
@@ -143,14 +163,74 @@ const SurveyEditor = () => {
       });
       return;
     }
-
+    let sur=[]
+    for (let q of questions){
+      sur.push({
+        uuid:q.uuid ? q.uuid : "",
+        suvery_id:surveyData.id,
+        suvery_name:surveyTitle,
+        suvery_time:"2025-11-16",
+        suvery_score:"0",
+        suvery_status:"未完成",
+        suvery_question_number:"",
+        q_question:q.question,
+        q_options:q.options,
+        q_correct_answer:"",
+        q_type:"single",
+        q_score:"10"
+      })
+    }
+    console.log(sur)
+    let res2 = await axios.post("/api/add_suvery_q", {
+      id: surveyData.id,
+      name: surveyTitle,
+      course: surveyCourse,
+      description: surveyDescription,
+      course_id: surveyData.course_id,
+      course_name: surveyData.course,
+      teacher_name: surveyData.teacher_name,
+      suverys: sur
+    }, {
+      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+    })
+    console.log(res2.data);
     // TODO: 调用API保存数据
+    // console.log(questions)
     toast({
       title: "保存成功",
       description: "问卷已成功保存"
     });
     navigate("/surveys");
   };
+
+  async function fetchSurveyData() {
+    let res = await axios.post("/api/get_suvery_q_by_suvery_id", {
+      survey_id: surveyData.id
+    }, {
+      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+    });
+    console.log(res.data);
+    if (res.data.code === 20000) {
+      let qs = [];
+      let num = 0;
+      for (let i = 0; i < res.data.suverys.length; i++) {
+        let q = res.data.suverys[i];
+        qs.push({
+          id: (num++).toString(),
+          type: "single",
+          question: q.q_question,
+          required: true,
+          options: q.q_options,
+          uuid: q.uuid,
+        });
+      }
+      setQuestions(qs);
+    }
+  }
+
+  useEffect(() => {
+    fetchSurveyData();
+  }, []);
 
   const getQuestionTypeLabel = (type: QuestionType) => {
     const labels: Record<QuestionType, string> = {
@@ -242,11 +322,11 @@ const SurveyEditor = () => {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
+                {/* <div className="space-y-2">
                   <Label>问题类型</Label>
                   <Select
                     value={question.type}
-                    onValueChange={(value: QuestionType) => 
+                    onValueChange={(value: QuestionType) =>
                       updateQuestion(question.id, "type", value)
                     }
                   >
@@ -260,13 +340,13 @@ const SurveyEditor = () => {
                       <SelectItem value="rating">评分题</SelectItem>
                     </SelectContent>
                   </Select>
-                </div>
-                <div className="space-y-2">
+                </div> */}
+                {/* <div className="space-y-2">
                   <Label>是否必答</Label>
                   <div className="flex items-center h-10 gap-2">
                     <Switch
                       checked={question.required}
-                      onCheckedChange={(checked) => 
+                      onCheckedChange={(checked) =>
                         updateQuestion(question.id, "required", checked)
                       }
                     />
@@ -274,7 +354,7 @@ const SurveyEditor = () => {
                       {question.required ? "必答" : "选答"}
                     </span>
                   </div>
-                </div>
+                </div> */}
               </div>
 
               <div className="space-y-2">

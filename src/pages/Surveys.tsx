@@ -3,12 +3,15 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ClipboardList, Clock, CheckCircle2, Users, Edit } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
+import { useEffect, useState } from "react";
 
 const Surveys = () => {
   const navigate = useNavigate();
 
-  const allSurveys = [
+  const [allSurveys, setAllSurveys] = useState([
     {
+      id: "1",
       title: "课程满意度调查",
       course: "人工智能基础",
       deadline: "2024-01-25",
@@ -19,6 +22,7 @@ const Surveys = () => {
       completed: false,
     },
     {
+      id: "2",
       title: "教学质量反馈",
       course: "数据结构",
       deadline: "2024-01-28",
@@ -29,6 +33,7 @@ const Surveys = () => {
       completed: false,
     },
     {
+      id: "3",
       title: "学习体验问卷",
       course: "编程基础",
       deadline: "2024-02-01",
@@ -39,6 +44,7 @@ const Surveys = () => {
       completed: false,
     },
     {
+      id: "4",
       title: "期中课程评价",
       course: "人工智能基础",
       completedDate: "2024-01-10",
@@ -47,6 +53,7 @@ const Surveys = () => {
       completed: true,
     },
     {
+      id: "5",
       title: "实验课程反馈",
       course: "算法设计",
       completedDate: "2024-01-05",
@@ -54,7 +61,39 @@ const Surveys = () => {
       participants: 42,
       completed: true,
     },
-  ];
+  ]);
+
+  async function fetchSurveys() {
+    // Fetch surveys from API if needed
+    let res = await axios.post("/api/getallsurveys", {}, {
+      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+    })
+    console.log(res.data.surveys);
+    let fetchedSurveys = [];
+    for (let i = 0; i < res.data.surveys.length; i++) {
+      let survey = res.data.surveys[i];
+      fetchedSurveys.push({
+        title: survey.name,
+        course: survey.course_name,
+        deadline: "2025-12-01",
+        questions: "0",
+        participants: "0",
+        status: survey.status || "未完成",
+        urgent: false,
+        completed: false,
+        id: survey.id,
+        description: survey.description,
+        course_id: survey.course_id,
+        teacher_name: survey.teacher_name,
+      })
+    }
+    setAllSurveys(fetchedSurveys);
+  }
+
+  useEffect(() => {
+    fetchSurveys();
+    // Fetch surveys from API if needed
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -73,7 +112,7 @@ const Surveys = () => {
               <div className="flex items-start justify-between">
                 <div 
                   className="flex items-start gap-4 flex-1 cursor-pointer"
-                  onClick={() => navigate(`/surveys/${index + 1}`)}
+                  onClick={() => navigate(`/surveys/${survey.id}`, { state: survey })}
                 >
                   <div className={`w-12 h-12 rounded-lg bg-gradient-to-br ${
                     survey.completed 
@@ -133,7 +172,7 @@ const Surveys = () => {
                       size="sm"
                       onClick={(e) => {
                         e.stopPropagation();
-                        navigate(`/survey-editor/${index + 1}`);
+                        navigate(`/survey-editor/${survey.id}`, { state: survey });
                       }}
                     >
                       <Edit className="h-4 w-4 mr-2" />
@@ -157,7 +196,7 @@ const Surveys = () => {
                   className="w-full"
                   onClick={(e) => {
                     e.stopPropagation();
-                    navigate(`/surveys/${index + 1}`);
+                    navigate(`/surveys/${survey.id}`, { state: survey });
                   }}
                 >
                   查看问卷内容
@@ -168,7 +207,7 @@ const Surveys = () => {
                     className="flex-1 bg-gradient-to-r from-primary to-accent hover:opacity-90"
                     onClick={(e) => {
                       e.stopPropagation();
-                      navigate(`/surveys/${index + 1}`);
+                      navigate(`/surveys/${survey.id}`, { state: survey });
                     }}
                   >
                     填写问卷
@@ -177,7 +216,7 @@ const Surveys = () => {
                     variant="outline"
                     onClick={(e) => {
                       e.stopPropagation();
-                      navigate(`/surveys/${index + 1}`);
+                      navigate(`/surveys/${survey.id}`, { state: survey });
                     }}
                   >
                     查看详情
