@@ -31,6 +31,7 @@ import {
 import axios from "axios";
 import { timeStamp } from "console";
 import { Description } from "@radix-ui/react-toast";
+import { set } from "date-fns";
 
 const CourseDetail = () => {
   const { courseId } = useParams();
@@ -55,7 +56,7 @@ const CourseDetail = () => {
   });
 
   // 每周课程内容
-  const weeklyContent = [
+  const [weeklyContent, setWeeklyContent] = useState([
     { week: 1, title: "", date: "", materials: [], assignments: [], quizzes: [], surveys: [] },
     { week: 2, title: "", date: "", materials: [], assignments: [], quizzes: [], surveys: [] },
     { week: 3, title: "", date: "", materials: [], assignments: [], quizzes: [], surveys: [] },
@@ -69,7 +70,7 @@ const CourseDetail = () => {
     { week: 11, title: "", date: "", materials: [], assignments: [], quizzes: [], surveys: [] },
     { week: 12, title: "", date: "", materials: [], assignments: [], quizzes: [], surveys: [] },
     { week: 13, title: "", date: "", materials: [], assignments: [], quizzes: [], surveys: [] },
-  ];
+  ]);
 
   const [weeklyContentState, setWeeklyContentState] = useState(() =>
     JSON.parse(JSON.stringify(weeklyContent))
@@ -523,6 +524,79 @@ const CourseDetail = () => {
     }
   };
 
+  const [teachingPeriod, setTeachingPeriod] = useState("");
+  const [isGenerating, setIsGenerating] = useState(false);
+
+  async function ai_generate_plan() {
+    if (!teachingPeriod.trim()) {
+      toast({
+        title: "请输入教学周期",
+        description: "教学周期不能为空",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsGenerating(true);
+    toast({
+      title: "正在生成教学计划...",
+      description: "AI正在为您生成教学计划，请稍候",
+    });
+
+    try {
+      let res = await axios.post("/api/ai_generate_plan", {
+        course_name: course.title,
+        course_description: course.description,
+        start_date: teachingPeriod
+      }, {
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+      });
+
+      console.log("AI生成响应:", res.data.response.plan);
+      let plan = res.data.response.plan || [];
+
+      // 先计算更新后的内容
+      const updatedContent = weeklyContentState.map(local => {
+        const remote = plan.find((p: any) => p.week === local.week);
+        return remote ? { ...local, ...remote } : local;
+      });
+      
+      console.log("更新后的weeklyContent:", updatedContent);
+      
+      // 批量保存到数据库
+      for (let w of updatedContent) {
+        let data = {
+          course_week_id: courseId + w.week.toString(),
+          course_id: courseId,
+          week_id: w.week.toString(),
+          title: w.title,
+          date: w.date
+        }
+        console.log("保存数据:", data)
+        await axios.post("/api/weekupdatetitle", data, {
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+        })
+      }
+      
+      // 最后更新状态
+      setWeeklyContentState(updatedContent);
+      
+      toast({
+        title: "生成成功",
+        description: `已生成 ${plan.length} 周的教学计划`,
+      });
+    } catch (error) {
+      console.error("AI生成失败:", error);
+      toast({
+        title: "生成失败",
+        description: "AI生成教学计划时出错",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGenerating(false);
+    }
+  }
+
   return (
     <div className="space-y-6">
       {/* 返回按钮和课程标题 */}
@@ -586,18 +660,26 @@ const CourseDetail = () => {
               <CardDescription>查看每周的学习内容</CardDescription>
             </div>
             {isTeacher && (
-              <Button
-                onClick={() => {
-                  toast({
-                    title: "AI生成教学计划",
-                    description: "该功能正在开发中...",
-                  });
-                }}
-                className="gap-2"
-              >
-                <Sparkles className="w-4 h-4" />
-                AI生成教学计划
-              </Button>
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2">
+                  <Label htmlFor="teaching-period" className="text-sm whitespace-nowrap">教学周期</Label>
+                  <Input
+                    id="teaching-period"
+                    value={teachingPeriod}
+                    onChange={(e) => setTeachingPeriod(e.target.value)}
+                    placeholder="例如：2024春季学期"
+                    className="w-48"
+                  />
+                </div>
+                <Button
+                  onClick={() => { ai_generate_plan() }}
+                  disabled={isGenerating}
+                  className="gap-2"
+                >
+                  <Sparkles className="w-4 h-4" />
+                  {isGenerating ? "生成中..." : "AI生成教学计划"}
+                </Button>
+              </div>
             )}
           </div>
         </CardHeader>
