@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -9,6 +9,8 @@ import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, ClipboardList, CheckCircle2, Users, Calendar } from "lucide-react";
+import axios from "axios";
+import { set } from "date-fns";
 
 type QuestionType = "single" | "multiple" | "text" | "rating";
 
@@ -22,20 +24,22 @@ interface Question {
 
 const SurveyDetail = () => {
   const { surveyId } = useParams();
+  const location = useLocation();
+  const surveyData = location.state;
   const navigate = useNavigate();
   const { toast } = useToast();
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState<Record<number, string | string[]>>({});
   const [isSubmitted, setIsSubmitted] = useState(false);
-
-  const survey = {
-    id: surveyId,
-    title: "课程满意度调查",
-    course: "人工智能基础",
-    description: "请您抽出几分钟时间填写本问卷，您的反馈对我们改进教学质量非常重要。",
-    deadline: "2024-01-25",
-    participants: 45,
-    totalQuestions: 8,
+  
+  const [survey, setSurvey] = useState({
+    id: surveyData.id,
+    title: surveyData.title,
+    course: surveyData.course,
+    description: surveyData.description,
+    deadline: surveyData.deadline,
+    participants: surveyData.participants,
+    totalQuestions: 0,
     questions: [
       {
         id: 1,
@@ -44,55 +48,45 @@ const SurveyDetail = () => {
         required: true,
         options: ["非常满意", "满意", "一般", "不满意", "非常不满意"],
       },
-      {
-        id: 2,
-        type: "single" as QuestionType,
-        question: "教师的教学方式是否清晰易懂？",
-        required: true,
-        options: ["非常清晰", "比较清晰", "一般", "不太清晰", "很难理解"],
-      },
-      {
-        id: 3,
-        type: "multiple" as QuestionType,
-        question: "您认为课程中哪些内容最有帮助？（可多选）",
-        required: true,
-        options: ["理论讲解", "实践案例", "课后作业", "在线测验", "讨论互动"],
-      },
-      {
-        id: 4,
-        type: "rating" as QuestionType,
-        question: "请为课程内容的难度打分（1-5分，5分最难）",
-        required: true,
-        options: ["1", "2", "3", "4", "5"],
-      },
-      {
-        id: 5,
-        type: "single" as QuestionType,
-        question: "您是否会向他人推荐这门课程？",
-        required: true,
-        options: ["非常愿意", "愿意", "不确定", "不愿意", "非常不愿意"],
-      },
-      {
-        id: 6,
-        type: "multiple" as QuestionType,
-        question: "您希望课程增加哪些内容？（可多选）",
-        required: false,
-        options: ["更多实践项目", "更多理论深度", "行业应用案例", "前沿技术介绍", "其他"],
-      },
-      {
-        id: 7,
-        type: "text" as QuestionType,
-        question: "您对课程有什么建议或意见？",
-        required: false,
-      },
-      {
-        id: 8,
-        type: "text" as QuestionType,
-        question: "您最喜欢课程的哪个部分？为什么？",
-        required: false,
-      },
     ] as Question[],
-  };
+  });
+
+  async function fetchSurveyData() {
+    let res = await axios.post("/api/get_suvery_q_by_suvery_id", {
+      survey_id: surveyData.id
+    }, {
+      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+    });
+    console.log("fetchSurveyData response:", res.data);
+    if (res.data.code === 20000 || res.data.code === "20000") {
+      let qs = [];
+      let num = 0;
+      for (let i = 0; i < res.data.suverys.length; i++) {
+        let q = res.data.suverys[i];
+        qs.push({
+          id: (num++).toString(),
+          type: "single",
+          question: q.q_question,
+          required: true,
+          options: q.q_options,
+          uuid: q.uuid,
+        });
+      }
+      console.log("Setting questions:", qs);
+      
+      setSurvey(prev => ({
+        ...prev,
+        questions: qs,
+        totalQuestions: qs.length
+      }));
+    } else {
+      console.error("API返回code不是20000:", res.data.code);
+    }
+  }
+
+  useEffect(() => {
+    fetchSurveyData();
+  }, []);
 
   const handleSingleChoice = (value: string) => {
     setAnswers({
@@ -215,7 +209,7 @@ const SurveyDetail = () => {
               </div>
             </div>
 
-            <Button 
+            <Button
               className="w-full bg-gradient-to-r from-primary to-accent hover:opacity-90"
               onClick={() => navigate("/surveys")}
             >
@@ -399,8 +393,8 @@ const SurveyDetail = () => {
                   index === currentQuestion
                     ? "default"
                     : answers[index] !== undefined
-                    ? "secondary"
-                    : "outline"
+                      ? "secondary"
+                      : "outline"
                 }
                 className="h-12 relative"
                 onClick={() => setCurrentQuestion(index)}
