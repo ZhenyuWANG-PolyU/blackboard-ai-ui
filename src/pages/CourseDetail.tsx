@@ -555,10 +555,17 @@ const CourseDetail = () => {
       console.log("AI生成响应:", res.data.response.plan);
       let plan = res.data.response.plan || [];
 
-      // 先计算更新后的内容
+      // 先计算更新后的内容，只更新 title 和 date 字段
       const updatedContent = weeklyContentState.map(local => {
         const remote = plan.find((p: any) => p.week === local.week);
-        return remote ? { ...local, ...remote } : local;
+        if (remote) {
+          return {
+            ...local,
+            title: remote.title || local.title,
+            date: remote.date || local.date
+          };
+        }
+        return local;
       });
       
       console.log("更新后的weeklyContent:", updatedContent);
