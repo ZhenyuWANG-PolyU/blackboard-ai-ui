@@ -104,6 +104,10 @@ const QuizDetail = () => {
   const progress = ((currentQuestion + 1) / quiz.totalQuestions) * 100;
   const answeredCount = Object.keys(answers).length;
 
+  useEffect(() => {
+    fetchQuizDetails();
+  }, []);
+
   if (isSubmitted) {
     const score = calculateScore();
     const correctCount = getCorrectCount();
@@ -219,9 +223,6 @@ const QuizDetail = () => {
     });
   }
 
-  useEffect(() => {
-    fetchQuizDetails();
-  }, []);
   return (
     <div className="space-y-6">
       <Button
