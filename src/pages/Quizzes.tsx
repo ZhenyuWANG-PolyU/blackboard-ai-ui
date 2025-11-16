@@ -3,61 +3,45 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Brain, Clock, CheckCircle2, Timer, Edit } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import axios from "axios";
+import { describe } from "node:test";
 
 const Quizzes = () => {
   const navigate = useNavigate();
 
-  const allQuizzes = [
-    {
-      title: "机器学习算法测试",
-      course: "人工智能基础",
-      duration: "60分钟",
-      questions: 20,
-      deadline: "2024-01-22",
-      status: "未开始",
-      urgent: true,
-      completed: false,
-    },
-    {
-      title: "数据结构知识测验",
-      course: "数据结构",
-      duration: "45分钟",
-      questions: 15,
-      deadline: "2024-01-25",
-      status: "未开始",
-      urgent: false,
-      completed: false,
-    },
-    {
-      title: "Python基础测试",
-      course: "编程基础",
-      duration: "30分钟",
-      questions: 10,
-      deadline: "2024-01-28",
-      status: "未开始",
-      urgent: false,
-      completed: false,
-    },
-    {
-      title: "线性回归理论测试",
-      course: "人工智能基础",
-      completedDate: "2024-01-12",
-      score: 92,
-      totalQuestions: 20,
-      correctAnswers: 18,
-      completed: true,
-    },
-    {
-      title: "排序算法测验",
-      course: "算法设计",
-      completedDate: "2024-01-09",
-      score: 85,
-      totalQuestions: 15,
-      correctAnswers: 13,
-      completed: true,
-    },
-  ];
+  const [allQuizzes, setAllQuizzes] = useState([
+  ]);
 
+  async function fetchQuizzes() {
+    let res = await axios.post("/api/selectallquizzes", {}, {
+      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+    })
+    console.log(res.data.quizzes);
+    let fetchedQuizzes = [];
+    for (let i = 0; i < res.data.quizzes.length; i++) {
+      let quiz = res.data.quizzes[i];
+      fetchedQuizzes.push({
+        title: quiz.name,
+        course: quiz.course_name,
+        duration: quiz.time,
+        questions: quiz.questions_number,
+        deadline: "2025-12-01",
+        status: quiz.status,
+        urgent: false,
+        completed: false,
+        description: quiz.description,
+        id: quiz.id,
+        score: quiz.score,
+        course_id: quiz.course_id,
+      })
+    }
+    setAllQuizzes(fetchedQuizzes);
+  }
+
+  useEffect(() => {
+    fetchQuizzes();
+  }, []);
   return (
     <div className="space-y-6">
       <div>
@@ -67,23 +51,22 @@ const Quizzes = () => {
 
       <div className="space-y-4">
         {allQuizzes.map((quiz, index) => (
-          <Card 
-            key={index} 
+          <Card
+            key={index}
             className="border-border/50 hover:shadow-md transition-all duration-200"
           >
             <CardHeader>
               <div className="flex items-start justify-between">
-                <div 
+                <div
                   className="flex items-start gap-4 flex-1 cursor-pointer"
-                  onClick={() => navigate(`/quizzes/${index + 1}`)}
+                  onClick={() => navigate(`/quizzes/${index + 1}`, { state: quiz })}
                 >
-                  <div className={`w-12 h-12 rounded-lg bg-gradient-to-br ${
-                    quiz.completed 
-                      ? 'from-green-500 to-emerald-500' 
-                      : quiz.urgent 
-                      ? 'from-red-500 to-orange-500' 
+                  <div className={`w-12 h-12 rounded-lg bg-gradient-to-br ${quiz.completed
+                    ? 'from-green-500 to-emerald-500'
+                    : quiz.urgent
+                      ? 'from-red-500 to-orange-500'
                       : 'from-primary to-accent'
-                  } flex items-center justify-center flex-shrink-0`}>
+                    } flex items-center justify-center flex-shrink-0`}>
                     {quiz.completed ? (
                       <CheckCircle2 className="w-6 h-6 text-white" />
                     ) : (
@@ -132,7 +115,7 @@ const Quizzes = () => {
                       size="sm"
                       onClick={(e) => {
                         e.stopPropagation();
-                        navigate(`/quiz-editor/${index + 1}`);
+                        navigate(`/quiz-editor/${index + 1}`, { state: quiz });
                       }}
                     >
                       <Edit className="h-4 w-4 mr-2" />
@@ -154,32 +137,32 @@ const Quizzes = () => {
             </CardHeader>
             <CardContent>
               {quiz.completed ? (
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   className="w-full"
                   onClick={(e) => {
                     e.stopPropagation();
-                    navigate(`/quizzes/${index + 1}`);
+                    navigate(`/quizzes/${index + 1}`, { state: quiz });
                   }}
                 >
                   查看测验详情
                 </Button>
               ) : (
                 <div className="flex gap-2">
-                  <Button 
+                  <Button
                     className="flex-1 bg-gradient-to-r from-primary to-accent hover:opacity-90"
                     onClick={(e) => {
                       e.stopPropagation();
-                      navigate(`/quizzes/${index + 1}`);
+                      navigate(`/quizzes/${index + 1}`, { state: quiz });
                     }}
                   >
                     开始测验
                   </Button>
-                  <Button 
+                  <Button
                     variant="outline"
                     onClick={(e) => {
                       e.stopPropagation();
-                      navigate(`/quizzes/${index + 1}`);
+                      navigate(`/quizzes/${index + 1}`, { state: quiz });
                     }}
                   >
                     查看详情

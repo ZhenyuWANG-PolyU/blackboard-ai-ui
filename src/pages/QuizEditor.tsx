@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,31 +9,38 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Plus, Trash2, GripVertical, Save } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import axios from "axios";
 
 interface QuizQuestion {
   id: string;
   question: string;
   options: string[];
-  correctAnswer: number;
+  correctAnswer: string;
   type: "single" | "multiple";
+  uuid: string;
+  q_score: string;
 }
 
 const QuizEditor = () => {
   const navigate = useNavigate();
   const { quizId } = useParams();
+  const location = useLocation();
+  const myquiz = location.state;
   const { toast } = useToast();
 
-  const [quizTitle, setQuizTitle] = useState("机器学习算法测试");
-  const [quizCourse, setQuizCourse] = useState("人工智能基础");
-  const [quizDuration, setQuizDuration] = useState("60");
-  const [quizDescription, setQuizDescription] = useState("");
+  const [quizTitle, setQuizTitle] = useState(myquiz?.title || "机器学习算法测试");
+  const [quizCourse, setQuizCourse] = useState(myquiz?.course || "人工智能基础");
+  const [quizDuration, setQuizDuration] = useState(myquiz?.duration || "60");
+  const [quizDescription, setQuizDescription] = useState(myquiz?.description || "");
   const [questions, setQuestions] = useState<QuizQuestion[]>([
     {
       id: "1",
       question: "什么是监督学习？",
       options: ["使用标记数据进行训练的学习方法", "不使用标记数据的学习方法", "强化学习的一种形式", "深度学习的特殊情况"],
-      correctAnswer: 0,
-      type: "single"
+      correctAnswer: "0",
+      type: "single",
+      uuid: "",
+      q_score: ""
     }
   ]);
 
@@ -42,14 +49,16 @@ const QuizEditor = () => {
       id: Date.now().toString(),
       question: "",
       options: ["选项A", "选项B", "选项C", "选项D"],
-      correctAnswer: 0,
-      type: "single"
+      correctAnswer: "0",
+      type: "single",
+      uuid: "",
+      q_score: ""
     };
     setQuestions([...questions, newQuestion]);
   };
 
   const updateQuestion = (id: string, field: keyof QuizQuestion, value: any) => {
-    setQuestions(questions.map(q => 
+    setQuestions(questions.map(q =>
       q.id === id ? { ...q, [field]: value } : q
     ));
   };
@@ -78,10 +87,10 @@ const QuizEditor = () => {
     setQuestions(questions.map(q => {
       if (q.id === questionId && q.options.length > 2) {
         const newOptions = q.options.filter((_, i) => i !== optionIndex);
-        return { 
-          ...q, 
+        return {
+          ...q,
           options: newOptions,
-          correctAnswer: q.correctAnswer >= optionIndex && q.correctAnswer > 0 ? q.correctAnswer - 1 : q.correctAnswer
+          correctAnswer: parseInt(q.correctAnswer) >= optionIndex && parseInt(q.correctAnswer) > 0 ? (parseInt(q.correctAnswer) - 1).toString() : q.correctAnswer
         };
       }
       return q;
@@ -100,7 +109,7 @@ const QuizEditor = () => {
     }
   };
 
-  const handleSave = () => {
+  async function handleSave() {
     // 验证所有题目是否填写完整
     const hasEmptyQuestion = questions.some(q => !q.question.trim());
     const hasEmptyOption = questions.some(q => q.options.some(opt => !opt.trim()));
@@ -131,7 +140,36 @@ const QuizEditor = () => {
       });
       return;
     }
-
+    let quizs = []
+    for (let q of questions) {
+      quizs.push({
+        uuid: q.uuid,
+        quiz_id: myquiz.id,
+        quiz_name: myquiz.title,
+        quiz_time: myquiz.duration,
+        quiz_score: myquiz.score,
+        quiz_status: myquiz.status,
+        quiz_question_number: myquiz.questions,
+        q_question: q.question,
+        q_options: q.options,
+        q_correct_answer: q.correctAnswer.toString(),
+        q_type: q.type,
+        q_score: q.q_score
+      })
+    }
+    let res = await axios.post("/api/updatequizq", {
+      id: myquiz.id,
+      name: myquiz.title,
+      time: myquiz.duration,
+      score: myquiz.score,
+      status: myquiz.status,
+      description: myquiz.description,
+      questions_number: myquiz.questions,
+      quizzes: quizs
+    }, {
+      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+    });
+    console.log(res.data);
     // TODO: 调用API保存数据
     toast({
       title: "保存成功",
@@ -139,6 +177,28 @@ const QuizEditor = () => {
     });
     navigate("/quizzes");
   };
+  async function fetchQuizDetails() {
+    let res = await axios.post("/api/selectquizbyid",{
+      quiz_id: myquiz.id
+    },{
+      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+    });
+    console.log(res.data);
+    let i=1;
+    setQuestions(res.data.quizzes.map((q:any) => ({
+      id: (i++).toString(),
+      question: q.q_question,
+      options: q.q_options,
+      correctAnswer: q.q_correct_answer,
+      type: q.q_type,
+      uuid: q.uuid,
+      q_score: q.q_score
+    })));
+  }
+
+  useEffect(() => {
+    fetchQuizDetails();
+  }, []);
 
   return (
     <div className="space-y-6 pb-16">
@@ -229,23 +289,14 @@ const QuizEditor = () => {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label>题目类型</Label>
-                <Select
-                  value={question.type}
-                  onValueChange={(value: "single" | "multiple") => 
-                    updateQuestion(question.id, "type", value)
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="single">单选题</SelectItem>
-                    <SelectItem value="multiple">多选题</SelectItem>
-                  </SelectContent>
-                </Select>
+                <Label>题目分值</Label>
+                <Textarea
+                  value={question.q_score}
+                  onChange={(e) => updateQuestion(question.id, "q_score", e.target.value)}
+                  placeholder="请输入题目分值"
+                  rows={2}
+                />
               </div>
-
               <div className="space-y-2">
                 <Label>题目内容</Label>
                 <Textarea
@@ -263,8 +314,8 @@ const QuizEditor = () => {
                     <input
                       type="radio"
                       name={`correct-${question.id}`}
-                      checked={question.correctAnswer === optIndex}
-                      onChange={() => updateQuestion(question.id, "correctAnswer", optIndex)}
+                      checked={parseInt(question.correctAnswer) === optIndex}
+                      onChange={() => updateQuestion(question.id, "correctAnswer", optIndex.toString())}
                       className="h-4 w-4"
                     />
                     <Input
