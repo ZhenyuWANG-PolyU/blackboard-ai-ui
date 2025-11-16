@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Plus, Trash2, GripVertical, Save, Upload } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, GripVertical, Save, Upload, Sparkles } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import axios from "axios";
 
@@ -331,14 +331,29 @@ const QuizEditor = () => {
                   <GripVertical className="h-5 w-5 text-muted-foreground cursor-move" />
                   <span className="font-semibold text-lg">第 {qIndex + 1} 题</span>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => deleteQuestion(question.id)}
-                  className="text-destructive hover:text-destructive"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      toast({
+                        title: "AI生成",
+                        description: "AI生成功能开发中..."
+                      });
+                    }}
+                  >
+                    <Sparkles className="h-4 w-4 mr-1" />
+                    AI生成
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => deleteQuestion(question.id)}
+                    className="text-destructive hover:text-destructive"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
