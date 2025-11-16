@@ -191,8 +191,23 @@ const Courses = () => {
     }
   };
 
+  function parseJwtPayload(token) {
+    // 取中间那段（payload）
+    const base64Payload = token.split('.')[1];
+    // Base64Url -> Base64，再解码
+    const json = atob(base64Payload.replace(/-/g, '+').replace(/_/g, '/'));
+    return JSON.parse(json);
+  }
+  function getPayloadfromToken() {
+    let token = localStorage.getItem("token") || "";
+    const payload = parseJwtPayload(token);
+    console.log(payload.user_id);
+    localStorage.setItem("user_id", payload.user_id);
+  }
+
   useEffect(() => {
     fetchCourses();
+    getPayloadfromToken();
   }, []);
 
   // 添加课程到系统

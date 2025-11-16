@@ -64,6 +64,22 @@ const Surveys = () => {
   ]);
 
   async function fetchSurveys() {
+    let res4 = await axios.post("/api/getcountsubmitsurveybyuserid", {}, {
+      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+    })
+    // console.log(res4.data.survey_submit_counts_by_user);
+    let userSubmitCounts = res4.data.survey_counts;
+
+    let res3 = await axios.post("/api/getcountofsubmitsurvey", {}, {
+      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+    })
+    // console.log(res3.data.survey_counts);
+    let surveyCounts = res3.data.survey_counts;
+
+    let res2 = await axios.post("/api/count_survey_q_by_suvery_id", {}, {
+      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+    })
+    let numbers = res2.data.survey_question_counts;
     // Fetch surveys from API if needed
     let res = await axios.post("/api/getallsurveys", {}, {
       headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
@@ -72,15 +88,25 @@ const Surveys = () => {
     let fetchedSurveys = [];
     for (let i = 0; i < res.data.surveys.length; i++) {
       let survey = res.data.surveys[i];
+
+      // 从数组中找到对应的提交计数
+      let submitCountObj = surveyCounts.find((s: any) => s.survey_id === survey.id);
+      let participantCount = submitCountObj ? submitCountObj.submit_count : 0;
+
+      // 从用户提交计数中找到对应的记录
+      let userSubmitObj = userSubmitCounts.find((s: any) => s.survey_id === survey.id);
+      let userSubmitCount = userSubmitObj ? userSubmitObj.submit_count : 0;
+      let isCompleted = userSubmitCount > 0;
+
       fetchedSurveys.push({
         title: survey.name,
         course: survey.course_name,
         deadline: "2025-12-01",
-        questions: "0",
-        participants: "0",
-        status: survey.status || "未完成",
+        questions: (numbers[survey.id] || 0).toString(),
+        participants: participantCount.toString(),
+        status: survey.status || "已完成",
         urgent: false,
-        completed: false,
+        completed: isCompleted,
         id: survey.id,
         description: survey.description,
         course_id: survey.course_id,
@@ -104,23 +130,22 @@ const Surveys = () => {
 
       <div className="space-y-4">
         {allSurveys.map((survey, index) => (
-          <Card 
-            key={index} 
+          <Card
+            key={index}
             className="border-border/50 hover:shadow-md transition-all duration-200"
           >
             <CardHeader>
               <div className="flex items-start justify-between">
-                <div 
+                <div
                   className="flex items-start gap-4 flex-1 cursor-pointer"
                   onClick={() => navigate(`/surveys/${survey.id}`, { state: survey })}
                 >
-                  <div className={`w-12 h-12 rounded-lg bg-gradient-to-br ${
-                    survey.completed 
-                      ? 'from-green-500 to-emerald-500' 
-                      : survey.urgent 
-                      ? 'from-orange-500 to-red-500' 
-                      : 'from-primary to-accent'
-                  } flex items-center justify-center flex-shrink-0`}>
+                  <div className={`w-12 h-12 rounded-lg bg-gradient-to-br ${survey.completed
+                      ? 'from-green-500 to-emerald-500'
+                      : survey.urgent
+                        ? 'from-orange-500 to-red-500'
+                        : 'from-primary to-accent'
+                    } flex items-center justify-center flex-shrink-0`}>
                     {survey.completed ? (
                       <CheckCircle2 className="w-6 h-6 text-white" />
                     ) : (
@@ -166,7 +191,7 @@ const Surveys = () => {
                   </div>
                 </div>
                 <div className="flex items-start gap-2">
-                  {!survey.completed && (
+                  {(
                     <Button
                       variant="outline"
                       size="sm"
@@ -191,8 +216,8 @@ const Surveys = () => {
             </CardHeader>
             <CardContent>
               {survey.completed ? (
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   className="w-full"
                   onClick={(e) => {
                     e.stopPropagation();
@@ -203,7 +228,7 @@ const Surveys = () => {
                 </Button>
               ) : (
                 <div className="flex gap-2">
-                  <Button 
+                  <Button
                     className="flex-1 bg-gradient-to-r from-primary to-accent hover:opacity-90"
                     onClick={(e) => {
                       e.stopPropagation();
@@ -212,7 +237,7 @@ const Surveys = () => {
                   >
                     填写问卷
                   </Button>
-                  <Button 
+                  <Button
                     variant="outline"
                     onClick={(e) => {
                       e.stopPropagation();

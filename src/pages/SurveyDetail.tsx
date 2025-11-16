@@ -20,6 +20,7 @@ interface Question {
   question: string;
   required: boolean;
   options?: string[];
+  uuid?: string;
 }
 
 const SurveyDetail = () => {
@@ -139,7 +140,8 @@ const SurveyDetail = () => {
     }
   };
 
-  const handleSubmit = () => {
+  async function handleSubmit() {
+    
     const requiredQuestions = survey.questions.filter((q) => q.required);
     const answeredRequired = requiredQuestions.every((q) => {
       const index = survey.questions.indexOf(q);
@@ -154,6 +156,30 @@ const SurveyDetail = () => {
       });
       return;
     }
+
+    const submissionData = {
+      user_id: localStorage.getItem("user_id"),
+      survey_id: survey.id,
+      survey_title: survey.title,
+      course: survey.course,
+      total_questions: survey.totalQuestions.toString(),
+      answered_count: Object.keys(answers).length.toString(),
+      questions_and_answers: survey.questions.map((q, index) => ({
+        // question_id: q.id,
+        question_text: q.question,
+        // question_type: q.type,
+        // required: q.required,
+        // uuid: q.uuid || null,
+        answer: answers[index] || null
+      })),
+      // raw_answers: answers
+    };
+
+    let res = await axios.post("/api/insertsubmitsurvey", submissionData, {
+      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+    });
+
+    console.log("问卷填写信息:", submissionData);
 
     setIsSubmitted(true);
     toast({
@@ -204,7 +230,7 @@ const SurveyDetail = () => {
                 <div className="text-sm text-muted-foreground">已回答问题</div>
               </div>
               <div className="text-center p-4 bg-secondary/50 rounded-lg">
-                <div className="text-2xl font-bold text-foreground">{survey.participants + 1}</div>
+                <div className="text-2xl font-bold text-foreground">{parseInt(survey.participants) + 1}</div>
                 <div className="text-sm text-muted-foreground">总参与人数</div>
               </div>
             </div>

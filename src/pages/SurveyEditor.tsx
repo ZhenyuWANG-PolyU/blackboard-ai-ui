@@ -291,6 +291,7 @@ const SurveyEditor = () => {
     }, {
       headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
     })
+    
     console.log(res2.data);
     // TODO: 调用API保存数据
     // console.log(questions)
