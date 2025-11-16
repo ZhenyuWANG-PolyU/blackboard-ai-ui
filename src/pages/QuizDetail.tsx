@@ -220,7 +220,7 @@ const QuizDetail = () => {
   }
 
   useEffect(() => {
-    // fetchQuizDetails();
+    fetchQuizDetails();
   }, []);
   return (
     <div className="space-y-6">
