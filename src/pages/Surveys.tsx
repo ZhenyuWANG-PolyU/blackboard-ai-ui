@@ -1,15 +1,20 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ClipboardList, Clock, CheckCircle2, Users, Edit, Sparkles } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { useEffect, useState } from "react";
+import ReactMarkdown from "react-markdown";
 
 const Surveys = () => {
   const navigate = useNavigate();
 
   const [allSurveys, setAllSurveys] = useState([]);
+  const [analysisResult, setAnalysisResult] = useState("");
+  const [isAnalysisDialogOpen, setIsAnalysisDialogOpen] = useState(false);
+  const [analyzingSurveyId, setAnalyzingSurveyId] = useState<string | null>(null);
 
   async function fetchSurveys() {
     let res4 = await axios.post("/api/getcountsubmitsurveybyuserid", {}, {
@@ -64,6 +69,26 @@ const Surveys = () => {
     setAllSurveys(fetchedSurveys);
   }
 
+  async function ai_analysis(surveyId: string) {
+    setAnalyzingSurveyId(surveyId);
+    try {
+      let res = await axios.post("/api/getsubmitsurveybysurveyid", {
+        survey_id: surveyId
+      }, {
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+      });
+      console.log("AI分析结果:", res.data.analysis.analysis);
+      setAnalysisResult(res.data.analysis.analysis);
+      setIsAnalysisDialogOpen(true);
+    } catch (error) {
+      console.error("AI分析失败:", error);
+      setAnalysisResult("分析失败，请稍后重试");
+      setIsAnalysisDialogOpen(true);
+    } finally {
+      setAnalyzingSurveyId(null);
+    }
+  }
+
   useEffect(() => {
     fetchSurveys();
     // Fetch surveys from API if needed
@@ -89,10 +114,10 @@ const Surveys = () => {
                   onClick={() => navigate(`/surveys/${survey.id}`, { state: survey })}
                 >
                   <div className={`w-12 h-12 rounded-lg bg-gradient-to-br ${survey.completed
-                      ? 'from-green-500 to-emerald-500'
-                      : survey.urgent
-                        ? 'from-orange-500 to-red-500'
-                        : 'from-primary to-accent'
+                    ? 'from-green-500 to-emerald-500'
+                    : survey.urgent
+                      ? 'from-orange-500 to-red-500'
+                      : 'from-primary to-accent'
                     } flex items-center justify-center flex-shrink-0`}>
                     {survey.completed ? (
                       <CheckCircle2 className="w-6 h-6 text-white" />
@@ -155,14 +180,14 @@ const Surveys = () => {
                       <Button
                         variant="outline"
                         size="sm"
+                        disabled={analyzingSurveyId === survey.id}
                         onClick={(e) => {
                           e.stopPropagation();
-                          // TODO: 实现AI分析功能
-                          console.log("AI分析问卷:", survey.id);
+                          ai_analysis(survey.id);
                         }}
                       >
                         <Sparkles className="h-4 w-4 mr-2" />
-                        AI分析
+                        {analyzingSurveyId === survey.id ? "分析中..." : "AI分析"}
                       </Button>
                     </>
                   )}
@@ -178,16 +203,27 @@ const Surveys = () => {
             </CardHeader>
             <CardContent>
               {survey.completed ? (
-                <Button
-                  variant="outline"
-                  className="w-full"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    navigate(`/surveys/${survey.id}`, { state: survey });
-                  }}
-                >
-                  查看问卷内容
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    className="w-full"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate(`/surveys/${survey.id}`, { state: survey });
+                    }}
+                  >
+                    查看问卷内容
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate(`/surveys/${survey.id}`, { state: survey });
+                    }}
+                  >
+                    查看详情
+                  </Button>
+                </div>
               ) : (
                 <div className="flex gap-2">
                   <Button
@@ -214,6 +250,20 @@ const Surveys = () => {
           </Card>
         ))}
       </div>
+
+      <Dialog open={isAnalysisDialogOpen} onOpenChange={setIsAnalysisDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>AI 分析结果</DialogTitle>
+            <DialogDescription>
+              基于问卷提交数据的智能分析
+            </DialogDescription>
+          </DialogHeader>
+          <div className="prose prose-sm max-w-none dark:prose-invert">
+            <ReactMarkdown>{analysisResult}</ReactMarkdown>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
