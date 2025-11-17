@@ -141,7 +141,7 @@ const AssignmentDetail = () => {
     setAssignment(prev => ({
       ...prev,
       submissions: subs,
-      score: res3.data.score.toString(),
+      score: res3.data.score ? res3.data.score : "0",
       submittedCount: s_count,
     }));
   }
