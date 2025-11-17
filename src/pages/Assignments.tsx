@@ -20,23 +20,8 @@ const Assignments = () => {
       deadline: "2024-01-20",
       status: "进行中",
       urgent: true,
-      id:"0"
-    },
-    {
-      title: "数据结构算法题集",
-      course: "数据结构",
-      deadline: "2024-01-22",
-      status: "未开始",
-      urgent: false,
-      id:"1"
-    },
-    {
-      title: "Python编程作业",
-      course: "编程基础",
-      deadline: "2024-01-25",
-      status: "未开始",
-      urgent: false,
-      id:"2"
+      id: "0",
+      submittedDate: "2024-01-18"
     },
   ]);
 
@@ -46,14 +31,14 @@ const Assignments = () => {
       course: "人工智能基础",
       submittedDate: "2024-01-10",
       score: "95",
-      id:"0"
+      id: "0"
     },
     {
       title: "排序算法实现",
       course: "算法设计",
       submittedDate: "2024-01-08",
       score: "88",
-      id:"1"
+      id: "1"
     },
   ]);
 
@@ -64,22 +49,38 @@ const Assignments = () => {
     console.log(res.data.assignments);
     let fetchedAssignments = [];
     let fetchedCompletedAssignments = [];
+
+    let res6 = await axios.post("/api/select_activity_date_by_user_id", {}, {
+      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+    })
+    let activityFinishTimes = res6.data.activity_finish_times;
+
     for (let i = 0; i < res.data.assignments.length; i++) {
       let asg = res.data.assignments[i];
-      if (asg.score === "未完成") {
+      asg.status = "未提交";
+      asg.urgent = true;
+      for (let aft of activityFinishTimes) {
+        if (aft.activity_id === asg.id) {
+          asg.submit_date = aft.finish_time.split(' ')[0];
+          asg.status = "已提交";
+          asg.urgent = false;
+        }
+      }
+      if (1 === 1) {
         fetchedAssignments.push({
           title: asg.name,
           course: asg.course_name,
           deadline: asg.deadline,
           status: asg.status,
-          urgent: false,
+          urgent: asg.urgent,
           fabu_time: asg.fabu_time,
           huanjingyaoqiu: asg.huanjingyaoqiu1,
           id: asg.id,
           description: asg.description,
-          score: asg.score,
+          score: "0",
           teacher_name: asg.teacher_name,
           yaoqiu: asg.yaoqiu,
+          submittedDate: asg.submit_date
         });
       } else {
         fetchedCompletedAssignments.push({
@@ -95,7 +96,7 @@ const Assignments = () => {
           score: asg.score,
           teacher_name: asg.teacher_name,
           yaoqiu: asg.yaoqiu,
-          submittedDate:asg.submit_date
+          submittedDate: asg.submit_date
         });
       }
 
@@ -115,10 +116,10 @@ const Assignments = () => {
       </div>
 
       <Tabs defaultValue="pending" className="space-y-6">
-        <TabsList className="grid w-full max-w-md grid-cols-2">
+        {/* <TabsList className="grid w-full max-w-md grid-cols-2">
           <TabsTrigger value="pending">待完成</TabsTrigger>
           <TabsTrigger value="completed">已完成</TabsTrigger>
-        </TabsList>
+        </TabsList> */}
 
         <TabsContent value="pending" className="space-y-4">
           {pendingAssignments.map((assignment, index) => (
@@ -144,6 +145,12 @@ const Assignments = () => {
                           <span className={assignment.urgent ? 'text-destructive font-medium' : ''}>
                             截止: {assignment.deadline}
                           </span>
+                          {assignment.status === "已提交" && (
+                            <>
+                              <span>•</span>
+                              <span>提交于: {assignment.submittedDate}</span>
+                            </>
+                          )}
                         </div>
                       </CardDescription>
                     </div>

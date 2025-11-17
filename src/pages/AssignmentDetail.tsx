@@ -70,12 +70,12 @@ const AssignmentDetail = () => {
     instructor: myassignment.teacher_name || "未知教师",
     deadline: myassignment.deadline,
     publishDate: myassignment.fabu_time || "未知日期",
-    status: "进行中", // 进行中、已完成、已逾期
+    status: myassignment.status || "进行中", // 进行中、已提交、已逾期
     score: myassignment.score || null,
     maxScore: myassignment.maxscore || 100,
     description: myassignment.description || "暂无描述",
     requirements: myassignment.yaoqiu || ["请按时完成作业", "确保代码可运行"],
-    submittedCount: 85,
+    submittedCount: 0,
     totalStudents: 120,
     submissions: [
       {
@@ -93,6 +93,29 @@ const AssignmentDetail = () => {
   });
 
   async function getAssignSubmit() {
+    let res3 = await axios.post("/api/get_assign_score_by_user_and_assign", {
+      user_id: localStorage.getItem("user_id"),
+      assign_id: assignment.id
+    }, {
+      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+    })
+    console.log(res3.data.score);
+
+
+    let res2 = await axios.post("/api/get_count_of_assign_submits", {}, {
+      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+    })
+    let count = res2.data.assign_counts;
+    let s_count = 0
+    let this_id = assignment.id;
+
+    for (let c of count) {
+      if (c.assign_id === this_id) {
+        s_count = c.submit_count;
+      }
+    }
+    console.log("提交数：", s_count);
+
     let res = await axios.post("/api/get_submits_by_assign_id", {
       assign_id: assignment.id
     }, {
@@ -114,9 +137,12 @@ const AssignmentDetail = () => {
         assign_description: sub.assign_description
       })
     }
+
     setAssignment(prev => ({
       ...prev,
-      submissions: subs
+      submissions: subs,
+      score: res3.data.score.toString(),
+      submittedCount: s_count,
     }));
   }
   useEffect(() => {
@@ -155,6 +181,21 @@ const AssignmentDetail = () => {
       });
       return;
     }
+    const now = new Date();
+    const finishTime = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
+
+    let res4 = await axios.post("/api/insert_activity_date", {
+      start_time: assignment.publishDate,
+      end_time: assignment.deadline,
+      finish_time: finishTime,
+      activity_id: assignment.id,
+      user_id: localStorage.getItem("user_id"),
+      user_id_activity_id: localStorage.getItem("user_id") + "_" + assignment.id,
+    }, {
+      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+    });
+    // console.log(res4.data);
+
     let res = await axios.post("/api/file_upload", {
       file_name: selectedFile.name,
       class_id: "",
@@ -172,7 +213,7 @@ const AssignmentDetail = () => {
       user_id: "",
       file_url: res.data.file_name,
       file_name: selectedFile.name,
-      submit_date: new Date().toISOString().split('T')[0],
+      submit_date: `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`,
       score: "待批改",
       feedback: "待批改",
       assign_description: submission
@@ -196,7 +237,7 @@ const AssignmentDetail = () => {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "已完成":
+      case "已提交":
         return "bg-green-500";
       case "进行中":
         return "bg-orange-500";
@@ -220,6 +261,19 @@ const AssignmentDetail = () => {
   };
 
   async function handleSave() {
+    let data_date = {
+      start_time: editedAssignment.publishDate,
+      end_time: editedAssignment.deadline,
+      finish_time: "",
+      activity_id: assignment.id,
+      user_id: "",
+      user_id_activity_id: ""
+    }
+    // console.log(data_date);
+    let res_date = await axios.post("/api/update_activity_date", data_date, {
+      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+    })
+    console.log(res_date.data);
     let ass = {
       id: assignment.id,
       name: editedAssignment.name,
@@ -379,7 +433,7 @@ const AssignmentDetail = () => {
       uuid: currentGradingSubmission.uuid,
       score: gradingScore.toString(),
       feedback: gradingFeedback.toString()
-    },{
+    }, {
       headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
     })
     await getAssignSubmit();
@@ -448,18 +502,18 @@ const AssignmentDetail = () => {
       </div>
 
       {/* 作业状态卡片 */}
-      <Card className={`border-2 ${assignment.status === "已完成" ? "border-green-500/50 bg-green-500/5" :
+      <Card className={`border-2 ${assignment.status === "已提交" ? "border-green-500/50 bg-green-500/5" :
         isOverdue ? "border-red-500/50 bg-red-500/5" :
           "border-orange-500/50 bg-orange-500/5"
         }`}>
         <CardContent className="p-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <div className={`w-16 h-16 rounded-xl bg-gradient-to-br ${assignment.status === "已完成" ? "from-green-500 to-emerald-500" :
+              <div className={`w-16 h-16 rounded-xl bg-gradient-to-br ${assignment.status === "已提交" ? "from-green-500 to-emerald-500" :
                 isOverdue ? "from-red-500 to-orange-500" :
                   "from-orange-500 to-yellow-500"
                 } flex items-center justify-center`}>
-                {assignment.status === "已完成" ? (
+                {assignment.status === "已提交" ? (
                   <CheckCircle2 className="w-8 h-8 text-white" />
                 ) : (
                   <ClipboardCheck className="w-8 h-8 text-white" />
@@ -494,7 +548,8 @@ const AssignmentDetail = () => {
             </div>
             {assignment.score !== null && (
               <div className="text-right">
-                <div className="text-4xl font-bold text-green-600">{assignment.score}</div>
+                <div className="text-4xl font-bold text-green-600">{assignment.score} 分</div>
+                {/* <div className="text-4xl font-bold text-green-600">{"未完成"}</div> */}
                 <div className="text-sm text-muted-foreground">/ {assignment.maxScore} 分</div>
               </div>
             )}
@@ -528,7 +583,7 @@ const AssignmentDetail = () => {
           </Card>
 
           {/* 提交作业 */}
-          {assignment.status !== "已完成" && (
+          {(
             <Card className="border-border/50">
               <CardHeader>
                 <CardTitle>提交作业</CardTitle>
@@ -601,41 +656,41 @@ const AssignmentDetail = () => {
                       </div>
                       <Badge variant="secondary">{sub.date}</Badge>
                     </div>
-                  <div 
-                    onClick={() => navigate(`/grading-detail/${sub.uuid}`, { 
-                      state: {
-                        date: sub.date,
-                        file: sub.file,
-                        score: sub.score,
-                        feedback: sub.feedback,
-                        uuid: sub.uuid,
-                        assign_id: sub.assign_id,
-                        user_id: sub.user_id,
-                        file_url: sub.file_url,
-                        assign_description: sub.assign_description
-                      }
-                    })}
-                    className="cursor-pointer hover:bg-accent/50 transition-colors p-3 rounded-lg"
-                  >
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="text-sm text-muted-foreground">得分:</span>
-                      <span className="text-lg font-bold text-green-600">{sub.score}</span>
-                      <span className="text-sm text-muted-foreground">/ {assignment.maxScore}</span>
+                    <div
+                      onClick={() => navigate(`/grading-detail/${sub.uuid}`, {
+                        state: {
+                          date: sub.date,
+                          file: sub.file,
+                          score: sub.score,
+                          feedback: sub.feedback,
+                          uuid: sub.uuid,
+                          assign_id: sub.assign_id,
+                          user_id: sub.user_id,
+                          file_url: sub.file_url,
+                          assign_description: sub.assign_description
+                        }
+                      })}
+                      className="cursor-pointer hover:bg-accent/50 transition-colors p-3 rounded-lg"
+                    >
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-sm text-muted-foreground">得分:</span>
+                        <span className="text-lg font-bold text-green-600">{sub.score}</span>
+                        <span className="text-sm text-muted-foreground">/ {assignment.maxScore}</span>
+                      </div>
+                      <div className="text-sm text-muted-foreground mb-3">
+                        <span className="font-medium">反馈: </span>
+                        {sub.feedback}
+                      </div>
                     </div>
-                    <div className="text-sm text-muted-foreground mb-3">
-                      <span className="font-medium">反馈: </span>
-                      {sub.feedback}
-                    </div>
-                  </div>
-                  <Button
-                    onClick={() => handleOpenGrading(sub)}
-                    variant="outline"
-                    size="sm"
-                    className="w-full"
-                  >
-                    <Edit className="w-4 h-4 mr-2" />
-                    批改作业
-                  </Button>
+                    <Button
+                      onClick={() => handleOpenGrading(sub)}
+                      variant="outline"
+                      size="sm"
+                      className="w-full"
+                    >
+                      <Edit className="w-4 h-4 mr-2" />
+                      批改作业
+                    </Button>
                   </div>
                 ))}
               </CardContent>
@@ -693,7 +748,7 @@ const AssignmentDetail = () => {
               <div className="flex justify-between">
                 <span className="text-muted-foreground">提交情况</span>
                 <span className="font-medium">
-                  {assignment.submittedCount} / {assignment.totalStudents}
+                  已提交 {assignment.submittedCount} 份
                 </span>
               </div>
             </CardContent>
