@@ -1,5 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { BookOpen, FileText, ClipboardCheck, TrendingUp } from "lucide-react";
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
 const Dashboard = () => {
@@ -39,6 +40,22 @@ const Dashboard = () => {
       link: "/statistics",
     },
   ];
+  function parseJwtPayload(token) {
+    // 取中间那段（payload）
+    const base64Payload = token.split('.')[1];
+    // Base64Url -> Base64，再解码
+    const json = atob(base64Payload.replace(/-/g, '+').replace(/_/g, '/'));
+    return JSON.parse(json);
+  }
+  function getPayloadfromToken() {
+    let token = localStorage.getItem("token") || "";
+    const payload = parseJwtPayload(token);
+    console.log(payload.user_id);
+    localStorage.setItem("user_id", payload.user_id);
+  }
+  useEffect(() => {
+    getPayloadfromToken();
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -49,8 +66,8 @@ const Dashboard = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {stats.map((stat) => (
-          <Card 
-            key={stat.title} 
+          <Card
+            key={stat.title}
             className="border-border/50 hover:shadow-lg transition-all duration-300 hover:-translate-y-1 cursor-pointer"
             onClick={() => navigate(stat.link)}
           >
@@ -128,3 +145,4 @@ const Dashboard = () => {
 };
 
 export default Dashboard;
+
